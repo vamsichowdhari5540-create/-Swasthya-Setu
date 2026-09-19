@@ -9,12 +9,9 @@ import { recordAudit } from '../patients/audit';
 import { getIdempotencyKey, insertIdempotent } from '../idempotency';
 import { SUMMARY_SELECT, toSummary, type SummaryRow } from '../summaries/repository';
 import { buildTemplateSummary } from '../ai/template';
-import { requestGroqSummary } from '../ai/groqClient';
+import { generateSummary } from '../ai/generate';
 
 export const summariesRouter = Router();
-
-const TEMPLATE_VERSION = 'template-v1';
-const GROQ_ADAPTER_VERSION = 'groq-adapter-v1';
 
 interface EncounterNarrativeRow {
   encounter_date: string;
@@ -55,31 +52,19 @@ summariesRouter.post(
     const supabase = getSupabase()!;
     const patient = req.patient!;
     const templateSummary = await loadTimelineNarrative(patient.id, patient.fullName);
-    const groq = await requestGroqSummary(patient.fullName, templateSummary);
+    const generated = await generateSummary(patient.fullName, templateSummary);
 
-    const values: Record<string, unknown> = groq
-      ? {
-          patient_id: patient.id,
-          created_by: req.user!.id,
-          status: 'draft',
-          source: 'groq',
-          model: groq.model,
-          model_version: GROQ_ADAPTER_VERSION,
-          draft_text: groq.result.summary,
-          triage_level: groq.result.triageLevel,
-          triage_rationale: groq.result.triageRationale,
-        }
-      : {
-          patient_id: patient.id,
-          created_by: req.user!.id,
-          status: 'draft',
-          source: 'template',
-          model: null,
-          model_version: TEMPLATE_VERSION,
-          draft_text: templateSummary,
-          triage_level: null,
-          triage_rationale: null,
-        };
+    const values: Record<string, unknown> = {
+      patient_id: patient.id,
+      created_by: req.user!.id,
+      status: 'draft',
+      source: generated.source,
+      model: generated.model,
+      model_version: generated.modelVersion,
+      draft_text: generated.draftText,
+      triage_level: generated.triageLevel,
+      triage_rationale: generated.triageRationale,
+    };
 
     const { data, error, replayed } = await insertIdempotent<SummaryRow>(
       supabase,

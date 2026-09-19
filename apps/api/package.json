@@ -15,6 +15,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "@swasthya-setu/shared-types": "*",
+    "ajv": "^8.20.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",

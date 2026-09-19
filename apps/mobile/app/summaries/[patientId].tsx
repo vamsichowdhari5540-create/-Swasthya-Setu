@@ -170,7 +170,7 @@ export default function SummariesScreen() {
             )}
 
             <Text style={[styles.footer, { color: colors.muted }]}>
-              {summary.source === 'groq' ? `Model: ${summary.model}` : 'Source: deterministic template'} · v
+              {summary.source === 'template' ? 'Source: deterministic template' : `Model: ${summary.model} (${summary.source})`} · v
               {summary.modelVersion} · by {summary.createdByName}
               {summary.status === 'approved' && summary.reviewedByName
                 ? ` · approved by ${summary.reviewedByName}`

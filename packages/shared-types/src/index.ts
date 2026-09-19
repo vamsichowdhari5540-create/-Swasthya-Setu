@@ -173,7 +173,7 @@ export type ConsultationSignal =
   | { kind: 'bye' };
 
 export type SummaryStatus = 'draft' | 'approved';
-export type SummarySource = 'template' | 'groq';
+export type SummarySource = 'template' | 'groq' | 'gemini';
 export type TriageLevel = 'routine' | 'priority' | 'urgent';
 
 export interface AiSummary {

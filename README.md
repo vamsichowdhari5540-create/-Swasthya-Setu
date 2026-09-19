@@ -217,31 +217,42 @@ that media path are what's been verified here.)*
 
 From a patient's detail screen (any role with access), tap **AI Summary →**.
 **Generate AI Summary** (ANM/ASHA or doctor) builds a draft straight from
-that patient's recorded visits: a deterministic template first
-(`apps/api/src/ai/template.ts`, always available), optionally rewritten by
-a Groq-hosted model with a triage signal if `GROQ_API_KEY` is configured
-(`apps/api/src/ai/groqClient.ts` — falls back to the template on any
-missing key, network failure, or a reply that fails the hand-rolled JSON
-Schema check, never blocking the feature). Signed in as `doctor@demo...`,
+that patient's recorded visits, through an escalating chain
+(`apps/api/src/ai/generate.ts`):
+
+1. A deterministic template (`apps/api/src/ai/template.ts`) — always
+   available, no model call, this is what Phase 7's Build sequence starts
+   with per the architecture doc.
+2. Groq (`apps/api/src/ai/groqClient.ts`), if `GROQ_API_KEY` is set — a
+   real narrative rewrite plus a triage signal.
+3. Gemini (`apps/api/src/ai/geminiClient.ts`), if `GEMINI_API_KEY` is set —
+   tried only when Groq is unset or fails, so one vendor's outage or a
+   decommissioned model (which happened once already to the Groq model id
+   this used) doesn't take the feature down with it.
+
+Every model reply — from either provider — is run through the same real
+JSON Schema (`apps/api/src/ai/schema.ts`, via `ajv`), not a hand-rolled
+check: anything that doesn't validate is treated exactly like a network
+failure and the chain moves on. Each cloud adapter also retries once
+(`apps/api/src/ai/retry.ts`) before giving up. Signed in as `doctor@demo...`,
 the draft is editable inline; **Approve** saves the final text with
 `status: approved`, `reviewed_by`, `approved_at`, and the `model`/
 `model_version` that produced it (`apps/api/src/routes/summaries.ts`) —
-exactly "approved result is saved with model/version metadata." A
+exactly "approved result is saved with model/version metadata," and
+`model` records the concrete resolved version (e.g. `gemini-3.5-flash-lite`
+behind the `gemini-flash-lite-latest` alias), not just the alias name. A
 `patient` account only ever sees approved summaries, never a pending draft
 (`GET /api/patients/:id/summaries` filters by status for that role). ✅
 
-*(Verified directly against the API with a live Groq key: generating a
-summary for a patient's real encounter timeline returns a Groq-authored
-narrative plus a triage signal (`source: "groq"`, `model:
-"openai/gpt-oss-20b"`), a doctor's edit+approve call returns `status:
-"approved"` with `reviewedByName` and `modelVersion` set, and the patient's
-own summaries list correctly excludes it until approved. Also confirmed:
-without a patient the caller has access to, the same access rule used
-everywhere else in the app (facility match or active consent) correctly
-rejects the request — a summary is not a bypass around consent. The
-template-only fallback path (no Groq key, or a bad/decommissioned model
-id) was hit and confirmed working during this session before the key was
-supplied.)*
+*(Verified directly against the API, live, for every link in the chain:
+Groq succeeding end-to-end with a real key; Groq failing (invalid key) and
+Gemini genuinely taking over, independently verified with its own real
+key; both failing and the deterministic template being served instead; a
+doctor's edit+approve call returning `status: "approved"` with
+`reviewedByName` and `modelVersion` set; and the same facility/consent
+access rule used everywhere else in the app correctly rejecting a summary
+request for a patient the caller has no access to — a summary is not a
+bypass around consent.)*
 
 ## Phase 8 exit test
 
@@ -268,7 +279,7 @@ patient-level rows. ✅
 ## Guardrails (see the architecture doc for the full list)
 
 - No real patient data, ever, in this environment — synthetic/demo data only.
-- Secrets (Supabase service role key, and later the Groq API key) live only
+- Secrets (Supabase service role key, Groq and Gemini API keys) live only
   in `apps/api/.env`. They must never reach the mobile bundle.
 - Database is the source of truth. Socket.IO (`apps/api/src/realtime`) only
   distributes changes; every referral screen re-fetches via REST regardless,
@@ -301,9 +312,9 @@ hoists dependencies and symlinks `@swasthya-setu/shared-types` into the root
 `node_modules`, so installing from a subdirectory wouldn't resolve it.
 
 **Render** (backend): point it at this repo, it reads `render.yaml`. Set
-`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `GROQ_API_KEY` in the Render
-dashboard — never in a committed file. Render injects its own `PORT`, which
-`apps/api/src/env.ts` already respects.
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY` and
+`GEMINI_API_KEY` in the Render dashboard — never in a committed file.
+Render injects its own `PORT`, which `apps/api/src/env.ts` already respects.
 
 **Vercel** (frontend): point it at this repo, it reads `vercel.json`. Set the
 three `EXPO_PUBLIC_*` variables in the Vercel dashboard —

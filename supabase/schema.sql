@@ -207,9 +207,10 @@ create table if not exists ai_summaries (
   patient_id uuid not null references patients (id),
   created_by uuid not null references profiles (id),
   status text not null default 'draft' check (status in ('draft', 'approved')),
-  -- 'template': deterministic, no model call (Groq unavailable, disabled,
-  -- or its response failed schema validation). 'groq': Groq-hosted rewrite.
-  source text not null default 'template' check (source in ('template', 'groq')),
+  -- 'template': deterministic, no model call succeeded. 'groq' / 'gemini':
+  -- two independent cloud adapters, tried in that order, so one vendor's
+  -- outage or a decommissioned model doesn't take the feature down with it.
+  source text not null default 'template' check (source in ('template', 'groq', 'gemini')),
   model text,
   model_version text,
   draft_text text not null,
@@ -229,6 +230,14 @@ create table if not exists ai_summaries (
 alter table ai_summaries enable row level security;
 
 create index if not exists ai_summaries_patient_id_idx on ai_summaries (patient_id);
+
+-- Post-demo hardening: added a second cloud model adapter (Gemini), so the
+-- 'source' column needs a third allowed value. `create table if not exists`
+-- above is a no-op on a database from before this change, same reasoning
+-- as every other constraint update in this file.
+alter table ai_summaries drop constraint if exists ai_summaries_source_check;
+alter table ai_summaries add constraint ai_summaries_source_check
+  check (source in ('template', 'groq', 'gemini'));
 
 -- Extend the audit trail with this phase's two sensitive actions, same
 -- append-only table used since Phase 3.

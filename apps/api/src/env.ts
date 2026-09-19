@@ -16,4 +16,5 @@ export const env = {
   supabaseUrl: optional('SUPABASE_URL'),
   supabaseServiceRoleKey: optional('SUPABASE_SERVICE_ROLE_KEY'),
   groqApiKey: optional('GROQ_API_KEY'),
+  geminiApiKey: optional('GEMINI_API_KEY'),
 };
