@@ -6,8 +6,11 @@ consent-controlled record via a QR digital health ID, offline-first field
 workflows and referral tracking.
 
 This repo is being built phase-by-phase per
-`SwasthyaSetu_Architecture_and_Phase_Wise_Development_Groq_FINAL2.docx`.
+`docs/SwasthyaSetu_Architecture_and_Phase_Wise_Development_Groq_FINAL2.docx`.
 Each phase is a gate: don't move to the next one until its exit test passes.
+For a narrative walkthrough with diagrams (architecture, the patient
+journey, and the AI summary flow in detail), see
+`docs/SwasthyaSetu_Overview.pdf`.
 
 **Status: Phase 9 — District Dashboard & Hardening.**
 
