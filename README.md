@@ -286,9 +286,53 @@ patient-level rows. ✅
 - The district dashboard is read-optimized and aggregated only — counts and
   averages, never individual patient names or notes.
 
+## Deploying (for a hosted demo)
+
+The two halves deploy to different places, because only one of them can be
+serverless:
+
+| Part | Host | Why |
+| --- | --- | --- |
+| Express API + Socket.IO | Render (`render.yaml`) | Socket.IO holds persistent WebSocket connections; a serverless function can't keep one open. |
+| Expo web export | Vercel (`vercel.json`) | Pure static SPA output (`web.output: "single"`), which is what Vercel serves best. |
+
+Both build from the **repo root**, not from inside `apps/*` — npm workspaces
+hoists dependencies and symlinks `@swasthya-setu/shared-types` into the root
+`node_modules`, so installing from a subdirectory wouldn't resolve it.
+
+**Render** (backend): point it at this repo, it reads `render.yaml`. Set
+`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and `GROQ_API_KEY` in the Render
+dashboard — never in a committed file. Render injects its own `PORT`, which
+`apps/api/src/env.ts` already respects.
+
+**Vercel** (frontend): point it at this repo, it reads `vercel.json`. Set the
+three `EXPO_PUBLIC_*` variables in the Vercel dashboard —
+`EXPO_PUBLIC_API_URL` must be the deployed Render URL (e.g.
+`https://swasthya-setu-api.onrender.com`), since these are inlined into the
+bundle at build time, not read at runtime. The `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+is a publishable key and safe in a client bundle; the service role key is not
+and never leaves the backend.
+
+### Showing multiple roles at once in a browser
+
+The Supabase session is persisted in `AsyncStorage`, which on web is
+`localStorage` — **shared across every tab of the same browser on the same
+origin**. So opening several tabs and logging into each as a different role
+does not work: the last login wins and the other tabs silently become that
+user. To demo several roles side by side, give each one its own storage:
+separate browser profiles (Chrome/Edge → Add profile), or different browsers
+entirely. One role per profile, same URL.
+
 ## Other commands
 
 ```bash
 npm run lint
 npm run typecheck
+npm run build:api      # compiles shared-types, then the API, to dist/
+npm run build:web      # static Expo web export to apps/mobile/dist/
 ```
+
+`packages/shared-types` is compiled (not consumed as raw `.ts`) because the
+production API runs `node dist/server.js`, and plain Node can't `require()` a
+TypeScript file the way `tsx` and Metro can. The root `postinstall` builds it
+automatically after `npm install`, so a fresh clone works without extra steps.

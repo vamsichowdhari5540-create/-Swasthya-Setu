@@ -1,0 +1,27 @@
+# Render blueprint for the Express + Socket.IO backend.
+#
+# The frontend is NOT deployed here — it's a static Expo web export hosted
+# on Vercel (see vercel.json). Only the API needs a long-running Node
+# process, because Socket.IO holds persistent WebSocket connections that a
+# serverless function can't keep open.
+#
+# Build and start run from the repo root, not apps/api: npm workspaces
+# hoists dependencies and symlinks @swasthya-setu/shared-types into the
+# root node_modules, so installing from a subdirectory would not resolve it.
+services:
+  - type: web
+    name: swasthya-setu-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build:api
+    startCommand: npm run start --workspace apps/api
+    healthCheckPath: /api/health
+    envVars:
+      # Set these in the Render dashboard — never commit real values.
+      # sync: false means "prompt me, don't read it from this file".
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

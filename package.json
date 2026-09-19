@@ -7,6 +7,10 @@
     "packages/*"
   ],
   "scripts": {
+    "postinstall": "npm run build --workspace packages/shared-types",
+    "build:shared-types": "npm run build --workspace packages/shared-types",
+    "build:api": "npm run build:shared-types && npm run build --workspace apps/api",
+    "build:web": "npm run build:shared-types && npm run build:web --workspace apps/mobile",
     "dev:api": "npm run dev --workspace apps/api",
     "dev:mobile": "npm run start --workspace apps/mobile",
     "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/mobile",

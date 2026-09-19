@@ -103,7 +103,7 @@ export default function ReferralDetailScreen() {
         method: 'POST',
         body: JSON.stringify({ mode: consultationMode }),
       });
-      router.push(`/consultations/${created.id}`);
+      router.push({ pathname: '/consultations/[id]', params: { id: created.id } });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not start the consultation.');
     } finally {
@@ -203,7 +203,7 @@ export default function ReferralDetailScreen() {
                   ? `${consultation.createdByName} is waiting in the call.`
                   : t('teleconsult_inProgress')}
               </Text>
-              <Link href={`/consultations/${consultation.id}`} asChild>
+              <Link href={{ pathname: '/consultations/[id]', params: { id: consultation.id } }} asChild>
                 <Pressable style={StyleSheet.flatten([styles.actionButton, { backgroundColor: colors.tint }])}>
                   <Text style={styles.actionButtonText}>{t('teleconsult_join')}</Text>
                 </Pressable>
