@@ -22,6 +22,12 @@ const DEMO_USERS: { email: string; fullName: string; role: UserRole; facility?: 
     role: 'doctor',
     facility: 'Vijayawada Government General Hospital',
   },
+  {
+    email: 'doctor2@demo.swasthyasetu.app',
+    fullName: 'Demo Doctor (Ibrahimpatnam PHC)',
+    role: 'doctor',
+    facility: 'Ibrahimpatnam PHC',
+  },
   { email: 'admin@demo.swasthyasetu.app', fullName: 'Demo District Admin', role: 'district_admin' },
 ];
 

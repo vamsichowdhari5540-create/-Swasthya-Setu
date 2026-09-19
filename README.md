@@ -80,12 +80,17 @@ architecture doc's guardrail against paid SMS OTP / real accounts here.
 | Patient | patient2@demo.swasthyasetu.app | Linked to **Ramesh Kumar** — a separate, simpler history: routine diabetes/BP follow-ups, no referral. Useful for showing two distinct patients side by side. |
 | ANM/ASHA | anm@demo.swasthyasetu.app | Kondapalli Sub Center |
 | Doctor | doctor@demo.swasthyasetu.app | Vijayawada Government General Hospital |
+| Doctor | doctor2@demo.swasthyasetu.app | Ibrahimpatnam PHC — a second facility/doctor, for demoing a referral that crosses two facilities neither of which is the ANM's own (e.g. Vijayawada → Ibrahimpatnam). |
 | District Admin | admin@demo.swasthyasetu.app | |
 
 A patient login is linked to its `patients` row via `user_id`, set directly
 in the database (there's no self-service "link my account" flow yet) — see
 `apps/api/scripts/seedUsers.ts` for account creation and the patient record
-itself is created the normal way (an ANM/ASHA registers it).
+itself is created the normal way (an ANM/ASHA registers it). That link is
+per-patient-row, not per-account: `apps/admin`'s **Reset demo data** clears
+the `patients` table, so after a reset `patient@...`/`patient2@...` are
+logins with no linked record until a new patient is registered and
+re-linked the same way.
 
 ## Phase 0 exit test
 
