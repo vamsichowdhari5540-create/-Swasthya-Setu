@@ -1,0 +1,209 @@
+import { createContext, useContext, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+
+// Phase 8: Multilingual & Accessibility (lean slice, given demo time
+// constraints — Home screen's nav and greeting switch language live,
+// proving "language can switch without breaking core navigation" without
+// re-translating every screen). Not persisted across app restarts on
+// purpose: this is a scope-limited demo of the mechanism, not the full
+// i18n rollout described for Phase 8.
+export type AppLanguage = 'en' | 'hi' | 'te';
+
+export const LANGUAGES: { code: AppLanguage; label: string }[] = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिंदी' },
+  { code: 'te', label: 'తెలుగు' },
+];
+
+const STRINGS = {
+  welcome: { en: 'Welcome', hi: 'स्वागत है', te: 'స్వాగతం' },
+  yourNavigation: { en: 'Your navigation', hi: 'आपका मेनू', te: 'మీ మెనూ' },
+  signOut: { en: 'Sign out', hi: 'साइन आउट', te: 'సైన్ అవుట్' },
+  role_patient: { en: 'Patient', hi: 'मरीज़', te: 'రోగి' },
+  role_anm_asha: { en: 'ANM / ASHA Field Worker', hi: 'एएनएम / आशा कार्यकर्ता', te: 'ANM / ఆశా వర్కర్' },
+  role_doctor: { en: 'Doctor', hi: 'डॉक्टर', te: 'డాక్టర్' },
+  role_district_admin: { en: 'District Admin', hi: 'जिला प्रशासक', te: 'జిల్లా అడ్మిన్' },
+  nav_myHealthId: { en: 'My Health ID (QR)', hi: 'मेरी स्वास्थ्य आईडी (QR)', te: 'నా హెల్త్ ఐడీ (QR)' },
+  nav_myTimeline: { en: 'My Health Timeline', hi: 'मेरा स्वास्थ्य विवरण', te: 'నా హెల్త్ టైమ్‌లైన్' },
+  nav_myConsents: { en: 'Manage Consent', hi: 'सहमति प्रबंधित करें', te: 'సమ్మతిని నిర్వహించండి' },
+  nav_myReferrals: { en: 'My Referrals', hi: 'मेरे रेफरल', te: 'నా రిఫరల్స్' },
+  nav_registerPatient: { en: 'Register Patient', hi: 'मरीज़ पंजीकृत करें', te: 'రోగిని నమోదు చేయండి' },
+  nav_searchPatients: { en: 'Search Patients', hi: 'मरीज़ खोजें', te: 'రోగులను వెతకండి' },
+  nav_scanQr: { en: 'Scan Patient QR', hi: 'मरीज़ का QR स्कैन करें', te: 'రోగి QR స్కాన్ చేయండి' },
+  nav_sentReferrals: { en: 'Sent Referrals', hi: 'भेजे गए रेफरल', te: 'పంపిన రిఫరల్స్' },
+  nav_incomingReferrals: { en: 'Incoming Referrals', hi: 'आने वाले रेफरल', te: 'వచ్చిన రిఫరల్స్' },
+  nav_syncStatus: { en: 'Sync Status', hi: 'सिंक स्थिति', te: 'సింక్ స్థితి' },
+  nav_dashboard: { en: 'District Dashboard', hi: 'जिला डैशबोर्ड', te: 'జిల్లా డాష్‌బోర్డ్' },
+
+  login_subtitle: { en: 'Sign in to continue', hi: 'जारी रखने के लिए साइन इन करें', te: 'కొనసాగించడానికి సైన్ ఇన్ చేయండి' },
+  login_email: { en: 'Email', hi: 'ईमेल', te: 'ఇమెయిల్' },
+  login_password: { en: 'Password', hi: 'पासवर्ड', te: 'పాస్‌వర్డ్' },
+  login_signIn: { en: 'Sign In', hi: 'साइन इन करें', te: 'సైన్ ఇన్ చేయండి' },
+  login_dataAccess: {
+    en: 'What data does this app access?',
+    hi: 'यह ऐप कौन सा डेटा एक्सेस करता है?',
+    te: 'ఈ యాప్ ఏ డేటాను యాక్సెస్ చేస్తుంది?',
+  },
+  login_demoAccounts: {
+    en: 'Demo accounts (password: Demo@1234)',
+    hi: 'डेमो खाते (पासवर्ड: Demo@1234)',
+    te: 'డెమో ఖాతాలు (పాస్‌వర్డ్: Demo@1234)',
+  },
+
+  register_fullName: { en: 'Full name', hi: 'पूरा नाम', te: 'పూర్తి పేరు' },
+  register_dob: { en: 'Date of birth', hi: 'जन्म तिथि', te: 'పుట్టిన తేదీ' },
+  register_sex: { en: 'Sex', hi: 'लिंग', te: 'లింగం' },
+  register_submit: { en: 'Register Patient', hi: 'मरीज़ पंजीकृत करें', te: 'రోగిని నమోదు చేయండి' },
+  sex_female: { en: 'female', hi: 'महिला', te: 'స్త్రీ' },
+  sex_male: { en: 'male', hi: 'पुरुष', te: 'పురుషుడు' },
+  sex_other: { en: 'other', hi: 'अन्य', te: 'ఇతర' },
+
+  search_placeholder: {
+    en: 'Search by name or health ID',
+    hi: 'नाम या स्वास्थ्य आईडी से खोजें',
+    te: 'పేరు లేదా హెల్త్ ఐడీ ద్వారా వెతకండి',
+  },
+  search_noResults: { en: 'No patients match', hi: 'कोई मरीज़ नहीं मिला', te: 'ఏ రోగి సరిపోలలేదు' },
+
+  scan_title: { en: 'Point the camera at a patient QR code', hi: 'मरीज़ के QR कोड पर कैमरा रखें', te: 'రోగి QR కోడ్ వైపు కెమెరా చూపండి' },
+  scan_permission: {
+    en: 'Camera permission is needed to scan a QR code.',
+    hi: 'QR कोड स्कैन करने के लिए कैमरा अनुमति आवश्यक है।',
+    te: 'QR కోడ్ స్కాన్ చేయడానికి కెమెరా అనుమతి అవసరం.',
+  },
+  scan_grant: { en: 'Grant camera permission', hi: 'कैमरा अनुमति दें', te: 'కెమెరా అనుమతి ఇవ్వండి' },
+
+  sync_title: { en: 'Sync Status', hi: 'सिंक स्थिति', te: 'సింక్ స్థితి' },
+  sync_empty: { en: 'Nothing queued — everything is synced.', hi: 'कुछ भी लंबित नहीं है — सब सिंक हो गया।', te: 'ఏమీ పెండింగ్‌లో లేదు — అంతా సింక్ అయింది.' },
+  sync_retry: { en: 'Retry', hi: 'फिर से कोशिश करें', te: 'మళ్లీ ప్రయత్నించండి' },
+
+  referral_receivingFacility: { en: 'Receiving facility', hi: 'प्राप्तकर्ता सुविधा', te: 'స్వీకరించే సదుపాయం' },
+  referral_reason: { en: 'Reason for referral', hi: 'रेफरल का कारण', te: 'రిఫరల్ కారణం' },
+  referral_submit: { en: 'Create Referral', hi: 'रेफरल बनाएं', te: 'రిఫరల్ సృష్టించండి' },
+
+  title_signIn: { en: 'Sign In', hi: 'साइन इन करें', te: 'సైన్ ఇన్ చేయండి' },
+  title_consent: { en: 'Privacy & Consent', hi: 'गोपनीयता और सहमति', te: 'గోప్యత & సమ్మతి' },
+  title_myAudit: { en: 'My Audit Log', hi: 'मेरा ऑडिट लॉग', te: 'నా ఆడిట్ లాగ్' },
+  title_scanQr: { en: 'Scan QR Code', hi: 'QR कोड स्कैन करें', te: 'QR కోడ్ స్కాన్ చేయండి' },
+  title_patient: { en: 'Patient', hi: 'मरीज़', te: 'రోగి' },
+  title_referral: { en: 'Referral', hi: 'रेफरल', te: 'రిఫరల్' },
+  title_consultation: { en: 'Consultation', hi: 'टेलीकंसल्ट', te: 'టెలికన్సల్ట్' },
+  title_aiSummary: { en: 'AI Summary', hi: 'एआई सारांश', te: 'AI సారాంశం' },
+
+  patient_dob: { en: 'Date of birth', hi: 'जन्म तिथि', te: 'పుట్టిన తేదీ' },
+  patient_sex: { en: 'Sex', hi: 'लिंग', te: 'లింగం' },
+  patient_referButton: { en: 'Refer this patient →', hi: 'इस मरीज़ को रेफर करें →', te: 'ఈ రోగిని రిఫర్ చేయండి →' },
+  patient_aiSummaryButton: { en: 'AI Summary →', hi: 'एआई सारांश →', te: 'AI సారాంశం →' },
+  patient_recordVisit: { en: 'Record a visit', hi: 'विज़िट दर्ज करें', te: 'విజిట్ నమోదు చేయండి' },
+  patient_saveVisit: { en: 'Save Visit', hi: 'विज़िट सहेजें', te: 'విజిట్ సేవ్ చేయండి' },
+  patient_timeline: { en: 'Timeline', hi: 'समयरेखा', te: 'టైమ్‌లైన్' },
+  patient_noVisits: { en: 'No visits recorded yet.', hi: 'अभी तक कोई विज़िट दर्ज नहीं है।', te: 'ఇంకా ఏ విజిట్ నమోదు కాలేదు.' },
+  patient_waitingSync: { en: 'Waiting to sync', hi: 'सिंक होने की प्रतीक्षा में', te: 'సింక్ కోసం వేచి ఉంది' },
+  patient_failedSync: { en: 'Failed to sync', hi: 'सिंक विफल', te: 'సింక్ విఫలమైంది' },
+
+  accept: { en: 'Accept Referral', hi: 'रेफरल स्वीकार करें', te: 'రిఫరల్ ఆమోదించండి' },
+  cancel: { en: 'Cancel Referral', hi: 'रेफरल रद्द करें', te: 'రిఫరల్ రద్దు చేయండి' },
+  reassign: { en: 'Reassign', hi: 'पुनः असाइन करें', te: 'తిరిగి కేటాయించండి' },
+  markCompleted: { en: 'Mark Completed', hi: 'पूर्ण के रूप में चिह्नित करें', te: 'పూర్తయినట్లు గుర్తించండి' },
+
+  list_incoming: { en: 'Incoming Referrals', hi: 'आने वाले रेफरल', te: 'వచ్చిన రిఫరల్స్' },
+  list_outgoing: { en: 'Sent Referrals', hi: 'भेजे गए रेफरल', te: 'పంపిన రిఫరల్స్' },
+  list_mine: { en: 'My Referrals', hi: 'मेरे रेफरल', te: 'నా రిఫరల్స్' },
+  list_empty: { en: 'Nothing here yet.', hi: 'यहाँ अभी कुछ नहीं है।', te: 'ఇక్కడ ఇంకా ఏమీ లేదు.' },
+
+  dash_totals: { en: 'Totals', hi: 'कुल', te: 'మొత్తాలు' },
+  dash_facilities: { en: 'Facilities', hi: 'सुविधाएँ', te: 'సదుపాయాలు' },
+  dash_patients: { en: 'Patients', hi: 'मरीज़', te: 'రోగులు' },
+  dash_referrals: { en: 'Referrals', hi: 'रेफरल', te: 'రిఫరల్స్' },
+  dash_byStatus: { en: 'Referrals by status', hi: 'स्थिति के अनुसार रेफरल', te: 'స్థితి వారీగా రిఫరల్స్' },
+  dash_avgAccept: { en: 'Avg. time to accept', hi: 'स्वीकृति का औसत समय', te: 'ఆమోదించడానికి సగటు సమయం' },
+  dash_facilityLoad: { en: 'Facility load', hi: 'सुविधा भार', te: 'సదుపాయం లోడ్' },
+  dash_auditActivity: { en: 'Audit activity', hi: 'ऑडिट गतिविधि', te: 'ఆడిట్ కార్యకలాపం' },
+
+  summary_generate: { en: 'Generate AI Summary', hi: 'एआई सारांश बनाएं', te: 'AI సారాంశం రూపొందించండి' },
+  summary_saveEdit: { en: 'Save edit', hi: 'संपादन सहेजें', te: 'ఎడిట్ సేవ్ చేయండి' },
+  summary_approve: { en: 'Approve', hi: 'स्वीकृत करें', te: 'ఆమోదించండి' },
+  summary_none: { en: 'No summaries yet.', hi: 'अभी तक कोई सारांश नहीं।', te: 'ఇంకా సారాంశాలు లేవు.' },
+
+  call_endCall: { en: 'End Call', hi: 'कॉल समाप्त करें', te: 'కాల్ ముగించండి' },
+
+  referral_completeTitle: { en: 'Complete referral', hi: 'रेफरल पूर्ण करें', te: 'రిఫరల్ పూర్తి చేయండి' },
+  referral_outcomeNotes: { en: 'Outcome notes (optional)', hi: 'परिणाम टिप्पणी (वैकल्पिक)', te: 'ఫలిత గమనికలు (ఐచ్ఛికం)' },
+  referral_reassignTitle: {
+    en: 'Reassign to another facility',
+    hi: 'किसी अन्य सुविधा को पुनः असाइन करें',
+    te: 'మరొక సదుపాయానికి తిరిగి కేటాయించండి',
+  },
+  teleconsult_title: { en: 'Teleconsultation', hi: 'टेलीकंसल्टेशन', te: 'టెలికన్సల్టేషన్' },
+  teleconsult_start: { en: 'Start Teleconsultation', hi: 'टेलीकंसल्टेशन शुरू करें', te: 'టెలికన్సల్టేషన్ ప్రారంభించండి' },
+  teleconsult_join: { en: 'Join Consultation', hi: 'परामर्श में शामिल हों', te: 'కన్సల్టేషన్‌లో చేరండి' },
+  teleconsult_video: { en: 'Video', hi: 'वीडियो', te: 'వీడియో' },
+  teleconsult_audio: { en: 'Audio only', hi: 'केवल ऑडियो', te: 'ఆడియో మాత్రమే' },
+  teleconsult_inProgress: { en: 'Call in progress.', hi: 'कॉल जारी है।', te: 'కాల్ కొనసాగుతోంది.' },
+
+  consent_hint: {
+    en: "Your home facility always has access. Grant other facilities access below — for example one you've been referred to — and revoke it whenever you want.",
+    hi: 'आपकी गृह सुविधा को हमेशा पहुंच है। नीचे अन्य सुविधाओं को पहुंच दें — जैसे जिसे आपको रेफर किया गया हो — और जब चाहें इसे रद्द करें।',
+    te: 'మీ హోమ్ ఫెసిలిటీకి ఎల్లప్పుడూ యాక్సెస్ ఉంటుంది. కింద ఇతర సదుపాయాలకు యాక్సెస్ ఇవ్వండి — ఉదాహరణకు మీరు రిఫర్ చేయబడిన ఒకటి — మరియు మీకు కావలసినప్పుడు దాన్ని రద్దు చేయండి.',
+  },
+  consent_facilitiesWithAccess: { en: 'Facilities with access', hi: 'पहुंच वाली सुविधाएँ', te: 'యాక్సెస్ ఉన్న సదుపాయాలు' },
+  consent_noOtherFacility: {
+    en: 'No facility other than your home facility has access.',
+    hi: 'आपकी गृह सुविधा के अलावा किसी अन्य को पहुंच नहीं है।',
+    te: 'మీ హోమ్ ఫెసిలిటీ తప్ప మరే సదుపాయానికి యాక్సెస్ లేదు.',
+  },
+  consent_revokeAccess: { en: 'Revoke access', hi: 'पहुंच रद्द करें', te: 'యాక్సెస్ రద్దు చేయండి' },
+  consent_grantAccessTitle: { en: 'Grant access', hi: 'पहुंच दें', te: 'యాక్సెస్ ఇవ్వండి' },
+  consent_allHaveAccess: {
+    en: 'Every known facility already has access.',
+    hi: 'हर ज्ञात सुविधा के पास पहले से ही पहुंच है।',
+    te: 'ప్రతి తెలిసిన సదుపాయానికి ఇప్పటికే యాక్సెస్ ఉంది.',
+  },
+  consent_grantAccess: { en: 'Grant access', hi: 'पहुंच दें', te: 'యాక్సెస్ ఇవ్వండి' },
+  consent_viewAuditLog: { en: 'View my audit log →', hi: 'मेरा ऑडिट लॉग देखें →', te: 'నా ఆడిట్ లాగ్ చూడండి →' },
+
+  audit_viewPatient: { en: 'Record viewed', hi: 'रिकॉर्ड देखा गया', te: 'రికార్డ్ చూడబడింది' },
+  audit_createEncounter: { en: 'Visit recorded', hi: 'विज़िट दर्ज की गई', te: 'విజిట్ నమోదైంది' },
+  audit_grantConsent: { en: 'Consent granted', hi: 'सहमति दी गई', te: 'సమ్మతి ఇవ్వబడింది' },
+  audit_revokeConsent: { en: 'Consent revoked', hi: 'सहमति रद्द की गई', te: 'సమ్మతి రద్దు చేయబడింది' },
+  audit_generateSummary: { en: 'AI summary generated', hi: 'एआई सारांश बनाया गया', te: 'AI సారాంశం రూపొందించబడింది' },
+  audit_approveSummary: { en: 'AI summary approved', hi: 'एआई सारांश स्वीकृत', te: 'AI సారాంశం ఆమోదించబడింది' },
+  audit_empty: { en: 'No recorded access yet.', hi: 'अभी तक कोई पहुंच दर्ज नहीं है।', te: 'ఇంకా యాక్సెస్ నమోదు కాలేదు.' },
+
+  healthid_hint: {
+    en: 'Show this to a field worker or doctor to let them find your record.',
+    hi: 'अपना रिकॉर्ड खोजने के लिए इसे किसी फील्ड वर्कर या डॉक्टर को दिखाएं।',
+    te: 'మీ రికార్డును కనుగొనడానికి దీన్ని ఫీల్డ్ వర్కర్ లేదా డాక్టర్‌కు చూపించండి.',
+  },
+} as const;
+
+type StringKey = keyof typeof STRINGS;
+
+interface LanguageContextValue {
+  language: AppLanguage;
+  setLanguage: (lang: AppLanguage) => void;
+  t: (key: StringKey) => string;
+}
+
+const LanguageContext = createContext<LanguageContextValue | null>(null);
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguage] = useState<AppLanguage>('en');
+
+  const value = useMemo<LanguageContextValue>(
+    () => ({
+      language,
+      setLanguage,
+      t: (key) => STRINGS[key]?.[language] ?? STRINGS[key]?.en ?? key,
+    }),
+    [language]
+  );
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+}
+
+export function useLanguage(): LanguageContextValue {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error('useLanguage must be used within LanguageProvider');
+  return ctx;
+}

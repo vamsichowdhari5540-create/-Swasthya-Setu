@@ -3,7 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000';
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public body: Record<string, unknown> = {}) {
     super(message);
   }
 }
@@ -24,7 +24,7 @@ export async function apiFetch<T>(
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new ApiError(response.status, body.error ?? `Request failed with ${response.status}`);
+    throw new ApiError(response.status, body.error ?? `Request failed with ${response.status}`, body);
   }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;

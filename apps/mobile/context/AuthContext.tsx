@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { AuthUser } from '@swasthya-setu/shared-types';
 
 import { supabase } from '@/lib/supabase';
+import { disconnectSocket } from '@/lib/socket';
 
 interface AuthContextValue {
   session: Session | null;
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: error?.message ?? null };
       },
       signOut: async () => {
+        disconnectSocket();
         await supabase.auth.signOut();
       },
     }),

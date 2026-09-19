@@ -8,14 +8,21 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 
 const SEX_OPTIONS: Sex[] = ['female', 'male', 'other'];
+const SEX_LABEL_KEYS: Record<Sex, 'sex_female' | 'sex_male' | 'sex_other'> = {
+  female: 'sex_female',
+  male: 'sex_male',
+  other: 'sex_other',
+};
 
 export default function RegisterPatientScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const router = useRouter();
   const { session } = useAuth();
+  const { t } = useLanguage();
 
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -44,7 +51,7 @@ export default function RegisterPatientScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={styles.label}>Full name</Text>
+      <Text style={styles.label}>{t('register_fullName')}</Text>
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
         placeholder="e.g. Lakshmi Devi"
@@ -53,7 +60,7 @@ export default function RegisterPatientScreen() {
         onChangeText={setFullName}
       />
 
-      <Text style={styles.label}>Date of birth</Text>
+      <Text style={styles.label}>{t('register_dob')}</Text>
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
         placeholder="YYYY-MM-DD"
@@ -62,7 +69,7 @@ export default function RegisterPatientScreen() {
         onChangeText={setDateOfBirth}
       />
 
-      <Text style={styles.label}>Sex</Text>
+      <Text style={styles.label}>{t('register_sex')}</Text>
       <View style={styles.chipsRow} lightColor="transparent" darkColor="transparent">
         {SEX_OPTIONS.map((option) => {
           const active = option === sex;
@@ -75,7 +82,7 @@ export default function RegisterPatientScreen() {
                 { borderColor: colors.border },
                 active && { backgroundColor: colors.tint, borderColor: colors.tint },
               ]}>
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{option}</Text>
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>{t(SEX_LABEL_KEYS[option])}</Text>
             </Pressable>
           );
         })}
@@ -87,7 +94,7 @@ export default function RegisterPatientScreen() {
         style={[styles.button, { backgroundColor: canSave ? colors.tint : colors.border }]}
         disabled={!canSave || submitting}
         onPress={handleSubmit}>
-        {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Register Patient</Text>}
+        {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('register_submit')}</Text>}
       </Pressable>
     </View>
   );

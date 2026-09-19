@@ -15,4 +15,5 @@ export const env = {
   port: Number(process.env.PORT ?? 4000),
   supabaseUrl: optional('SUPABASE_URL'),
   supabaseServiceRoleKey: optional('SUPABASE_SERVICE_ROLE_KEY'),
+  groqApiKey: optional('GROQ_API_KEY'),
 };

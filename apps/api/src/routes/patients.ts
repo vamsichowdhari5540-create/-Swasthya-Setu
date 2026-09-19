@@ -1,39 +1,20 @@
 import { Router } from 'express';
-import type { CreatePatientRequest, Patient } from '@swasthya-setu/shared-types';
+import type { CreatePatientRequest } from '@swasthya-setu/shared-types';
 
 import { getSupabase } from '../supabaseClient';
 import { verifyAuth } from '../auth/verifyAuth';
 import { requireRole } from '../auth/requireRole';
 import { generateHealthId } from '../patients/generateHealthId';
+import { PATIENT_COLUMNS, toPatient } from '../patients/repository';
+import { canAccessPatient } from '../patients/access';
+import { recordAudit } from '../patients/audit';
 
 export const patientsRouter = Router();
 
-function toPatient(row: {
-  id: string;
-  health_id: string;
-  full_name: string;
-  date_of_birth: string;
-  sex: Patient['sex'];
-  facility_id: string;
-  user_id: string | null;
-}): Patient {
-  return {
-    id: row.id,
-    healthId: row.health_id,
-    fullName: row.full_name,
-    dateOfBirth: row.date_of_birth,
-    sex: row.sex,
-    facilityId: row.facility_id,
-    userId: row.user_id,
-  };
-}
-
-const PATIENT_COLUMNS = 'id, health_id, full_name, date_of_birth, sex, facility_id, user_id';
-
-// Registration + lookup are staff actions (field worker or doctor). Search
-// and QR resolution stay staff-only in Phase 2 — Phase 3 adds the
-// consent/minimum-necessary layer that will refine exactly what each staff
-// member is allowed to see, rather than "any staff sees any patient".
+// Registration is a staff action (field worker or doctor). Search stays
+// staff-only and directory-only — it returns just enough identity to find
+// the right person to scan/request consent from, not clinical content, so
+// it isn't access-gated the way the health-id lookup and timeline are.
 patientsRouter.post('/patients', verifyAuth, requireRole('anm_asha', 'doctor'), async (req, res) => {
   const supabase = getSupabase()!;
   const body = req.body as Partial<CreatePatientRequest>;
@@ -102,7 +83,9 @@ patientsRouter.get('/patients/search', verifyAuth, requireRole('anm_asha', 'doct
 });
 
 // The QR scan resolution endpoint: the mobile app scans a code, extracts
-// the opaque health_id, and calls this to reach the authorized record.
+// the opaque health_id, and calls this to reach the authorized record. This
+// is where the architecture doc's data flow puts the consent check — right
+// after the scan, before any record content is read.
 patientsRouter.get(
   '/patients/health-id/:healthId',
   verifyAuth,
@@ -123,7 +106,19 @@ patientsRouter.get(
       res.status(404).json({ error: 'No patient matches that QR code.' });
       return;
     }
-    res.json(toPatient(data));
+
+    const patient = toPatient(data);
+    const allowed = await canAccessPatient(supabase, req.user!, patient);
+    if (!allowed) {
+      res.status(403).json({
+        error: "Your facility doesn't have access to this patient's record.",
+        needsConsent: true,
+      });
+      return;
+    }
+
+    await recordAudit(supabase, { patientId: patient.id, actorId: req.user!.id, action: 'view_patient' });
+    res.json(patient);
   }
 );
 

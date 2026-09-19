@@ -8,11 +8,13 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
+import { useLanguage } from '@/lib/i18n';
 
 export default function SearchPatientsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const { session } = useAuth();
+  const { t } = useLanguage();
 
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Patient[]>([]);
@@ -40,7 +42,7 @@ export default function SearchPatientsScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
-        placeholder="Search by name or health ID"
+        placeholder={t('search_placeholder')}
         placeholderTextColor={colors.muted}
         value={query}
         onChangeText={runSearch}
@@ -56,7 +58,7 @@ export default function SearchPatientsScreen() {
         ListEmptyComponent={
           !loading && searched ? (
             <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 20 }}>
-              No patients match &quot;{query}&quot;.
+              {t('search_noResults')} &quot;{query}&quot;.
             </Text>
           ) : null
         }

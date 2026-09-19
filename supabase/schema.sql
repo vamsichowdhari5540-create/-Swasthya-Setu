@@ -73,3 +73,168 @@ drop policy if exists "patients_select_own" on patients;
 create policy "patients_select_own" on patients
   for select
   using (auth.uid() = user_id);
+
+-- Phase 3: Consent, Encounter Timeline & Audit.
+-- Replaces Phase 2's placeholder ("any staff sees any patient") with real
+-- access control: a staff member may reach a patient's record only if their
+-- facility registered that patient, or the patient has actively consented
+-- to that facility. See apps/api/src/patients/access.ts — this is enforced
+-- in exactly one place (the backend), not duplicated into RLS, per the
+-- architecture doc's principle of keeping authn/authz/consent as separate,
+-- centrally-enforced checks.
+
+-- Append-only clinical facts: a visit is recorded once and never edited or
+-- deleted, so continuity of care never depends on a last-write-wins update
+-- silently overwriting what a previous field worker or doctor observed.
+create table if not exists encounters (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients (id),
+  facility_id uuid not null references facilities (id),
+  recorded_by uuid not null references profiles (id),
+  encounter_date timestamptz not null default now(),
+  notes text not null,
+  -- Phase 5: the client-generated id from the device's offline outbox.
+  -- Unique so a retried sync (after a dropped connection, before the
+  -- device saw the first response) reaches the same row instead of a
+  -- duplicate — this is what "server receives exactly one logical
+  -- operation" means in practice. Null for anything created online only.
+  client_mutation_id uuid unique,
+  created_at timestamptz not null default now()
+);
+
+alter table encounters enable row level security;
+
+-- `create table if not exists` above is a no-op once the table already
+-- exists from an earlier phase's run of this file — adding a column to an
+-- existing table needs its own statement. Every later phase that extends
+-- an existing table follows this same pattern.
+alter table encounters add column if not exists client_mutation_id uuid unique;
+
+-- Consent is additive and revocable, not a single mutable flag: keeping
+-- every grant/revoke as its own row is itself part of the audit trail of
+-- who had access when, which a single "consented boolean" would lose.
+create table if not exists consents (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients (id),
+  facility_id uuid not null references facilities (id),
+  granted_by uuid not null references profiles (id),
+  granted_at timestamptz not null default now(),
+  revoked_at timestamptz,
+  revoked_by uuid references profiles (id)
+);
+
+alter table consents enable row level security;
+
+-- Every protected-record access and every consent change is written here
+-- and is never updated or deleted — an audit log you can edit isn't one.
+create table if not exists audit_events (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients (id),
+  actor_id uuid not null references profiles (id),
+  action text not null check (
+    action in ('view_patient', 'create_encounter', 'grant_consent', 'revoke_consent')
+  ),
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table audit_events enable row level security;
+
+-- Phase 4: Referral Continuity.
+-- The Pending -> Accepted -> Completed workflow the pitch is built around.
+-- originating_facility_id is captured at creation time rather than derived
+-- from created_by's current facility, so the referral's history stays
+-- correct even if that staff member is later reassigned elsewhere.
+create table if not exists referrals (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients (id),
+  originating_facility_id uuid not null references facilities (id),
+  receiving_facility_id uuid not null references facilities (id),
+  created_by uuid not null references profiles (id),
+  accepted_by uuid references profiles (id),
+  reason text not null,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'completed', 'cancelled')),
+  completion_notes text,
+  -- Phase 5: same idempotency guarantee as encounters.client_mutation_id.
+  client_mutation_id uuid unique,
+  created_at timestamptz not null default now(),
+  accepted_at timestamptz,
+  completed_at timestamptz,
+  cancelled_at timestamptz
+);
+
+alter table referrals enable row level security;
+
+-- Phase 5: Offline-First Field App & Sync.
+-- No new tables — client_mutation_id is the entire server-side surface
+-- this phase needs. The outbox, retry queue and sync status live entirely
+-- on the device (SQLite); the server only needs to recognize a replayed
+-- mutation and answer with the same row instead of a duplicate.
+alter table referrals add column if not exists client_mutation_id uuid unique;
+
+-- Phase 6: Low-Bandwidth Teleconsultation.
+-- Deliberately tied to a referral rather than free-standing: the pitch's
+-- workflow is "doctor ACCEPTED referral -> consultation/assessment ->
+-- COMPLETED", so a consultation only ever exists between two sides that
+-- already both know about each other (no separate "how does the other
+-- side find out" problem to solve), and access reuses the referral's own
+-- facility-based rule instead of a new one.
+create table if not exists consultations (
+  id uuid primary key default gen_random_uuid(),
+  referral_id uuid not null references referrals (id),
+  patient_id uuid not null references patients (id),
+  created_by uuid not null references profiles (id),
+  joined_by uuid references profiles (id),
+  mode text not null default 'video' check (mode in ('video', 'audio')),
+  status text not null default 'waiting' check (status in ('waiting', 'active', 'ended')),
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  ended_at timestamptz,
+  duration_seconds integer
+);
+
+alter table consultations enable row level security;
+
+-- Phase 7: AI Summarization & Assisted Triage.
+-- Per the architecture doc's guardrail, AI is assistance, not autonomous
+-- diagnosis: every row starts as a `draft` (built from a deterministic
+-- template, optionally upgraded by a Groq-hosted rewrite) and only becomes
+-- meaningful once a doctor reviews/edits and approves it — model/version
+-- metadata is captured at creation so an approved result stays traceable
+-- to exactly what produced it.
+create table if not exists ai_summaries (
+  id uuid primary key default gen_random_uuid(),
+  patient_id uuid not null references patients (id),
+  created_by uuid not null references profiles (id),
+  status text not null default 'draft' check (status in ('draft', 'approved')),
+  -- 'template': deterministic, no model call (Groq unavailable, disabled,
+  -- or its response failed schema validation). 'groq': Groq-hosted rewrite.
+  source text not null default 'template' check (source in ('template', 'groq')),
+  model text,
+  model_version text,
+  draft_text text not null,
+  edited_text text,
+  -- Experimental triage signal: routine/priority/urgent, always with a
+  -- plain-language rationale a doctor can check against the timeline
+  -- rather than a bare label to trust blindly. Null for template-only
+  -- summaries, which don't attempt triage at all.
+  triage_level text check (triage_level in ('routine', 'priority', 'urgent')),
+  triage_rationale text,
+  reviewed_by uuid references profiles (id),
+  approved_at timestamptz,
+  client_mutation_id uuid unique,
+  created_at timestamptz not null default now()
+);
+
+alter table ai_summaries enable row level security;
+
+create index if not exists ai_summaries_patient_id_idx on ai_summaries (patient_id);
+
+-- Extend the audit trail with this phase's two sensitive actions, same
+-- append-only table used since Phase 3.
+alter table audit_events drop constraint if exists audit_events_action_check;
+alter table audit_events add constraint audit_events_action_check
+  check (action in (
+    'view_patient', 'create_encounter', 'grant_consent', 'revoke_consent',
+    'generate_summary', 'approve_summary'
+  ));

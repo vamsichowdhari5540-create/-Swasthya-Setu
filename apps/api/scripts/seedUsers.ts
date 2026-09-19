@@ -9,6 +9,7 @@ const DEMO_PASSWORD = 'Demo@1234';
 
 const DEMO_USERS: { email: string; fullName: string; role: UserRole; facility?: string }[] = [
   { email: 'patient@demo.swasthyasetu.app', fullName: 'Demo Patient', role: 'patient' },
+  { email: 'patient2@demo.swasthyasetu.app', fullName: 'Demo Patient Two', role: 'patient' },
   {
     email: 'anm@demo.swasthyasetu.app',
     fullName: 'Demo ANM/ASHA Worker',

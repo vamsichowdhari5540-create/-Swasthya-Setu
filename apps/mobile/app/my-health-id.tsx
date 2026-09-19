@@ -1,43 +1,17 @@
-import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import type { Patient } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useAuth } from '@/context/AuthContext';
-import { apiFetch, ApiError } from '@/lib/api';
-
-type State = { kind: 'loading' } | { kind: 'error'; message: string } | { kind: 'done'; patient: Patient };
+import { useOwnPatient } from '@/lib/useOwnPatient';
+import { useLanguage } from '@/lib/i18n';
 
 export default function MyHealthIdScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
-  const { session } = useAuth();
-  const [state, setState] = useState<State>({ kind: 'loading' });
-
-  useEffect(() => {
-    let cancelled = false;
-    apiFetch<Patient>(session, '/api/patients/me')
-      .then((patient) => {
-        if (!cancelled) setState({ kind: 'done', patient });
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setState({
-            kind: 'error',
-            message:
-              err instanceof ApiError && err.status === 404
-                ? 'No patient record is linked to your account yet. Ask a field worker to register you.'
-                : 'Could not load your health ID.',
-          });
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
+  const state = useOwnPatient();
+  const { t } = useLanguage();
 
   if (state.kind === 'loading') {
     return (
@@ -62,9 +36,7 @@ export default function MyHealthIdScreen() {
       </View>
       <Text style={styles.name}>{state.patient.fullName}</Text>
       <Text style={[styles.healthId, { color: colors.tint }]}>{state.patient.healthId}</Text>
-      <Text style={[styles.hint, { color: colors.muted }]}>
-        Show this to a field worker or doctor to let them find your record.
-      </Text>
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('healthid_hint')}</Text>
     </View>
   );
 }

@@ -6,11 +6,13 @@ import { Pressable, StyleSheet } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
+import { useLanguage } from '@/lib/i18n';
 
 export default function ScanPatientQrScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const router = useRouter();
+  const { t } = useLanguage();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
@@ -21,11 +23,9 @@ export default function ScanPatientQrScreen() {
   if (!permission.granted) {
     return (
       <View style={[styles.center, { backgroundColor: colors.background, padding: 24 }]}>
-        <Text style={{ textAlign: 'center', marginBottom: 16 }}>
-          SwasthyaSetu needs camera access to scan a patient&apos;s QR digital health ID.
-        </Text>
+        <Text style={{ textAlign: 'center', marginBottom: 16 }}>{t('scan_permission')}</Text>
         <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={requestPermission}>
-          <Text style={styles.buttonText}>Grant camera access</Text>
+          <Text style={styles.buttonText}>{t('scan_grant')}</Text>
         </Pressable>
       </View>
     );
@@ -51,7 +51,7 @@ export default function ScanPatientQrScreen() {
         }
       />
       <View style={styles.hint} lightColor="rgba(0,0,0,0.55)" darkColor="rgba(0,0,0,0.55)">
-        <Text style={styles.hintText}>Point the camera at the patient&apos;s QR code</Text>
+        <Text style={styles.hintText}>{t('scan_title')}</Text>
       </View>
     </View>
   );

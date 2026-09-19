@@ -6,11 +6,13 @@ import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/lib/i18n';
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
   const { signIn } = useAuth();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,11 +30,11 @@ export default function LoginScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={styles.title}>SwasthyaSetu</Text>
-      <Text style={[styles.subtitle, { color: colors.muted }]}>Sign in to continue</Text>
+      <Text style={[styles.subtitle, { color: colors.muted }]}>{t('login_subtitle')}</Text>
 
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
-        placeholder="Email"
+        placeholder={t('login_email')}
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         keyboardType="email-address"
@@ -41,7 +43,7 @@ export default function LoginScreen() {
       />
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
-        placeholder="Password"
+        placeholder={t('login_password')}
         placeholderTextColor={colors.muted}
         secureTextEntry
         value={password}
@@ -54,15 +56,15 @@ export default function LoginScreen() {
         style={[styles.button, { backgroundColor: colors.tint, opacity: submitting ? 0.7 : 1 }]}
         disabled={submitting || !email || !password}
         onPress={handleSignIn}>
-        {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+        {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('login_signIn')}</Text>}
       </Pressable>
 
       <Link href="/consent" style={styles.link}>
-        <Text style={[styles.linkText, { color: colors.tint }]}>What data does this app access?</Text>
+        <Text style={[styles.linkText, { color: colors.tint }]}>{t('login_dataAccess')}</Text>
       </Link>
 
       <View style={[styles.demoBox, { borderColor: colors.border }]}>
-        <Text style={[styles.demoLabel, { color: colors.muted }]}>Demo accounts (password: Demo@1234)</Text>
+        <Text style={[styles.demoLabel, { color: colors.muted }]}>{t('login_demoAccounts')}</Text>
         <Text style={[styles.demoLine, { color: colors.muted }]}>patient@demo.swasthyasetu.app</Text>
         <Text style={[styles.demoLine, { color: colors.muted }]}>anm@demo.swasthyasetu.app</Text>
         <Text style={[styles.demoLine, { color: colors.muted }]}>doctor@demo.swasthyasetu.app</Text>

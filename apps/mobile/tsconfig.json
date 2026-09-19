@@ -6,7 +6,12 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    // Matches Metro's platform-extension resolution (webrtc.native.ts /
+    // webrtc.web.ts / CallVideoView.web.tsx) so `tsc` resolves the same
+    // file Metro would bundle for each platform, instead of only seeing
+    // whichever variant happens to load first as a plain `foo.ts`.
+    "moduleSuffixes": ["", ".native", ".web"]
   },
   "include": [
     "**/*.ts",
