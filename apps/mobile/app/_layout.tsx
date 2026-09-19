@@ -2,7 +2,8 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { ActivityIndicator, Platform, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -18,6 +19,23 @@ export {
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const MAX_WEB_WIDTH = 480;
+
+// This is a mobile app; on a desktop browser (the Vercel-hosted web build,
+// or previewing locally) it would otherwise stretch full-width, which
+// reads as a broken layout rather than an app. Native is untouched — this
+// wrapper is a no-op there. Wraps the whole tree (including the loading
+// spinner below) rather than just the Stack, so every state gets framed
+// the same way.
+function WebFrame({ children }: { children: ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return (
+    <View style={{ flex: 1, alignItems: 'center', backgroundColor: '#dfe5e2' }}>
+      <View style={{ flex: 1, width: '100%', maxWidth: MAX_WEB_WIDTH, backgroundColor: '#fff' }}>{children}</View>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -40,13 +58,15 @@ export default function RootLayout() {
   }
 
   return (
-    <LanguageProvider>
-      <AuthProvider>
-        <SyncProvider>
-          <RootLayoutNav />
-        </SyncProvider>
-      </AuthProvider>
-    </LanguageProvider>
+    <WebFrame>
+      <LanguageProvider>
+        <AuthProvider>
+          <SyncProvider>
+            <RootLayoutNav />
+          </SyncProvider>
+        </AuthProvider>
+      </LanguageProvider>
+    </WebFrame>
   );
 }
 
