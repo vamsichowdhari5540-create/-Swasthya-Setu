@@ -16,9 +16,10 @@ Each phase is a gate: don't move to the next one until its exit test passes.
 ```
 apps/
   mobile/   Expo (React Native) app — Patient / ANM-ASHA / Doctor UI
-  api/      Node.js + Express backend — the only thing that talks to Supabase and Groq
+  admin/    React + Vite web console — District Admin dashboard (Phase 9)
+  api/      Node.js + Express backend — the only thing that talks to Supabase, Groq and Gemini
 packages/
-  shared-types/   TypeScript types shared between mobile and api
+  shared-types/   TypeScript types shared across mobile, admin and api
 supabase/
   schema.sql      Postgres schema (source of truth), extended every phase
 ```
@@ -304,14 +305,54 @@ handling was confirmed to cleanly reset to idle rather than getting stuck.)*
 
 ## Phase 9 exit test
 
-Signed in as `admin@demo...`, **District Dashboard** calls
+A district admin's job is at a desk, not a field phone — so per the
+architecture doc's free stack ("React/Vite + free static hosting"), this
+is a **separate web console** (`apps/admin`), not a screen bolted onto the
+mobile app. Sign in at `apps/admin` (`npm run dev:admin`, or
+`admin@demo...` / `Demo@1234` once deployed) and the dashboard calls
 `GET /api/admin/dashboard` (`apps/api/src/routes/dashboard.ts`,
-`district_admin`-only) and shows referral counts by status, average
-time-to-accept (the bottleneck signal), and per-facility load (patient
-count, incoming/outgoing/pending referral counts) — aggregated numbers
-only, no patient name or clinical note ever leaves this endpoint, per the
-guardrail. Recent audit activity is shown as action counts, not individual
-patient-level rows. ✅
+`district_admin`-only, gated the same way every other admin-only route in
+this app is) to show:
+
+- **Referral bottlenecks**: counts by status, plus two separate latency
+  signals — average time to *accept* (the queue-wait stage) and average
+  time to *complete* (the assessment-in-progress stage) — distinguishing
+  where a referral is actually getting stuck.
+- **Facility load**: patients, incoming/outgoing/pending referrals per
+  facility.
+- **Sync health**: how many visits and referrals arrived through the
+  on-device offline outbox (Phase 5) vs. created directly online — the
+  only signal of that path visible from the server, since the outbox
+  itself lives on the device, not in this database.
+- **Audit activity**: action counts, not individual patient-level rows.
+
+No patient name, note, or other clinical detail crosses this endpoint at
+any point — every field is either a count, an average, or a facility
+name, per the guardrail.
+
+**Test-data reset & demo-mode controls**, also called for in the Build
+list: `POST /api/admin/reset-demo-data` clears every synthetic
+transactional row (patients, encounters, referrals, consultations, AI
+summaries, consents, audit log) back to a clean slate, in FK-safe delete
+order — facilities and login accounts are untouched, since those are the
+environment, not test data. Guarded twice: a typed confirmation phrase in
+the UI (the button stays disabled without it) *and* the same phrase
+required server-side in the request body, so a client bypass still can't
+trigger it blind. ✅
+
+(The mobile app's own `Dashboard` screen from the earlier demo pass still
+exists as a lightweight companion view against the same endpoint — useful
+for a quick glance from a phone — but `apps/admin` is the authoritative
+Phase 9 console the doc describes, with the reset controls and full
+metric set that only exist there.)
+
+*(Verified live: the dashboard renders real aggregated numbers from the
+actual database, including a real accept→complete latency and real
+offline-vs-online sync counts reflecting genuine outbox activity from
+earlier in this project. The reset endpoint's guards were verified
+directly — a wrong confirmation phrase returns 400, a non-admin role
+returns 403 — without actually running the reset against this session's
+demo data.)*
 
 ## Guardrails (see the architecture doc for the full list)
 
@@ -336,30 +377,40 @@ patient-level rows. ✅
 
 ## Deploying (for a hosted demo)
 
-The two halves deploy to different places, because only one of them can be
+Three pieces deploy to different places, because only one of them can be
 serverless:
 
 | Part | Host | Why |
 | --- | --- | --- |
 | Express API + Socket.IO | Render (`render.yaml`) | Socket.IO holds persistent WebSocket connections; a serverless function can't keep one open. |
-| Expo web export | Vercel (`vercel.json`) | Pure static SPA output (`web.output: "single"`), which is what Vercel serves best. |
+| Expo web export (mobile) | Vercel (`vercel.json`) | Pure static SPA output (`web.output: "single"`), which is what Vercel serves best. |
+| Admin console (`apps/admin`) | A second Vercel project | Also a static build (Vite), per Phase 9's free stack — but a separate Vercel project from the mobile one, since they build from different commands/output directories. |
 
-Both build from the **repo root**, not from inside `apps/*` — npm workspaces
-hoists dependencies and symlinks `@swasthya-setu/shared-types` into the root
-`node_modules`, so installing from a subdirectory wouldn't resolve it.
+All three build from the **repo root**, not from inside `apps/*` — npm
+workspaces hoists dependencies and symlinks `@swasthya-setu/shared-types`
+into the root `node_modules`, so installing from a subdirectory wouldn't
+resolve it.
 
 **Render** (backend): point it at this repo, it reads `render.yaml`. Set
 `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY` and
 `GEMINI_API_KEY` in the Render dashboard — never in a committed file.
 Render injects its own `PORT`, which `apps/api/src/env.ts` already respects.
 
-**Vercel** (frontend): point it at this repo, it reads `vercel.json`. Set the
-three `EXPO_PUBLIC_*` variables in the Vercel dashboard —
+**Vercel — mobile web**: point it at this repo, it reads `vercel.json`. Set
+the three `EXPO_PUBLIC_*` variables in the Vercel dashboard —
 `EXPO_PUBLIC_API_URL` must be the deployed Render URL (e.g.
 `https://swasthya-setu-api.onrender.com`), since these are inlined into the
 bundle at build time, not read at runtime. The `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 is a publishable key and safe in a client bundle; the service role key is not
 and never leaves the backend.
+
+**Vercel — admin console**: create a **second** Vercel project pointing at
+the same repo, and in that project's own dashboard settings (not
+`vercel.json`, which is already claimed by the mobile build) override the
+build command to `npm run build:admin` and the output directory to
+`apps/admin/dist`. Set the three `VITE_*` variables from
+`apps/admin/.env.example`, same `EXPO_PUBLIC_API_URL`-style reasoning: the
+anon key is safe client-side, `VITE_API_URL` should be the Render URL.
 
 ### Showing multiple roles at once in a browser
 

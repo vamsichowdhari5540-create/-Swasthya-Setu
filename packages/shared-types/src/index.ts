@@ -215,14 +215,32 @@ export interface FacilityLoad {
   pendingIncoming: number;
 }
 
+export interface SyncHealth {
+  encountersViaOfflineOutbox: number;
+  encountersOnline: number;
+  referralsViaOfflineOutbox: number;
+  referralsOnline: number;
+}
+
 export interface DashboardResponse {
   generatedAt: string;
   totals: { facilities: number; patients: number; referrals: number };
   referralsByStatus: Record<string, number>;
   avgAcceptanceLatencyMinutes: number | null;
+  avgCompletionLatencyMinutes: number | null;
+  syncHealth: SyncHealth;
   facilityLoad: FacilityLoad[];
   recentAuditActionCounts: Record<string, number>;
   recentAuditEventCount: number;
+}
+
+export interface ResetDemoDataRequest {
+  confirm: string;
+}
+
+export interface ResetDemoDataResponse {
+  reset: true;
+  clearedTables: string[];
 }
 
 export interface HealthCheckResponse {

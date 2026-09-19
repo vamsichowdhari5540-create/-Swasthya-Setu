@@ -11,10 +11,12 @@
     "build:shared-types": "npm run build --workspace packages/shared-types",
     "build:api": "npm run build:shared-types && npm run build --workspace apps/api",
     "build:web": "npm run build:shared-types && npm run build:web --workspace apps/mobile",
+    "build:admin": "npm run build:shared-types && npm run build --workspace apps/admin",
     "dev:api": "npm run dev --workspace apps/api",
     "dev:mobile": "npm run start --workspace apps/mobile",
-    "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/mobile",
-    "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/mobile",
+    "dev:admin": "npm run dev --workspace apps/admin",
+    "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/mobile && npm run lint --workspace apps/admin",
+    "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/mobile && npm run typecheck --workspace apps/admin",
     "seed": "npm run seed --workspace apps/api",
     "seed:users": "npm run seed:users --workspace apps/api"
   }

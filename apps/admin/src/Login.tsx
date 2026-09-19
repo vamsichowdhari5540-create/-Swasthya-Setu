@@ -1,0 +1,45 @@
+import { useState } from 'react';
+
+export function Login({ onSignIn }: { onSignIn: (email: string, password: string) => Promise<string | null> }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const err = await onSignIn(email, password);
+    setSubmitting(false);
+    if (err) setError(err);
+  };
+
+  return (
+    <div className="login-page">
+      <form className="login-card" onSubmit={handleSubmit}>
+        <h1>SwasthyaSetu</h1>
+        <p className="muted">District Admin Console</p>
+        <input
+          type="email"
+          placeholder="Email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        {error && <p className="error">{error}</p>}
+        <button type="submit" disabled={submitting || !email || !password}>
+          {submitting ? 'Signing in…' : 'Sign In'}
+        </button>
+        <p className="muted small">Demo: admin@demo.swasthyasetu.app / Demo@1234</p>
+      </form>
+    </div>
+  );
+}
