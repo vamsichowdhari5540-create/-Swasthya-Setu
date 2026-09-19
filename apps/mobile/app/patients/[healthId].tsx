@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
@@ -10,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/api';
 import { useSync } from '@/context/SyncContext';
 import { useLanguage } from '@/lib/i18n';
+import { VoiceInputButton } from '@/components/VoiceInputButton';
 
 type PatientState =
   | { kind: 'loading' }
@@ -143,6 +145,7 @@ export default function PatientDetailScreen() {
         href={{ pathname: '/referrals/new', params: { patientId: patient.id, patientName: patient.fullName } }}
         asChild>
         <Pressable style={StyleSheet.flatten([styles.referButton, { borderColor: colors.tint }])}>
+          <Ionicons name="git-branch-outline" size={18} color={colors.tint} />
           <Text style={[styles.referButtonText, { color: colors.tint }]}>{t('patient_referButton')}</Text>
         </Pressable>
       </Link>
@@ -151,23 +154,29 @@ export default function PatientDetailScreen() {
         href={{ pathname: '/summaries/[patientId]', params: { patientId: patient.id, patientName: patient.fullName } }}
         asChild>
         <Pressable style={StyleSheet.flatten([styles.referButton, { borderColor: colors.tint }])}>
+          <Ionicons name="sparkles-outline" size={18} color={colors.tint} />
           <Text style={[styles.referButtonText, { color: colors.tint }]}>{t('patient_aiSummaryButton')}</Text>
         </Pressable>
       </Link>
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={styles.cardLabel}>{t('patient_recordVisit')}</Text>
-        <TextInput
-          style={[
-            styles.input,
-            { borderColor: colors.border, color: colors.text, backgroundColor: colors.background },
-          ]}
-          placeholder="What happened at this visit? (synthetic demo data only)"
-          placeholderTextColor={colors.muted}
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-        />
+        <Text style={[styles.hint, { color: colors.muted }]}>{t('patient_recordVisitHint')}</Text>
+        <View style={styles.inputRow} lightColor="transparent" darkColor="transparent">
+          <TextInput
+            style={[
+              styles.input,
+              styles.inputWithVoice,
+              { borderColor: colors.border, color: colors.text, backgroundColor: colors.background },
+            ]}
+            placeholder="What happened at this visit? (synthetic demo data only)"
+            placeholderTextColor={colors.muted}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+          />
+          <VoiceInputButton onResult={(text) => setNotes((prev) => (prev ? `${prev} ${text}` : text))} />
+        </View>
         {formError && <Text style={styles.error}>{formError}</Text>}
         <Pressable
           style={[styles.button, { backgroundColor: notes.trim() ? colors.tint : colors.border }]}
@@ -253,10 +262,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   referButton: {
+    flexDirection: 'row',
+    gap: 8,
     borderWidth: 1.5,
     borderRadius: 14,
+    minHeight: 48,
     paddingVertical: 12,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   referButtonText: {
@@ -269,6 +282,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
+  },
+  hint: {
+    fontSize: 12,
+    marginBottom: 10,
   },
   placeholder: {
     fontSize: 13,
@@ -286,6 +303,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'capitalize',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+    marginBottom: 12,
+  },
   input: {
     borderWidth: 1,
     borderRadius: 12,
@@ -294,7 +317,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 80,
     textAlignVertical: 'top',
-    marginBottom: 12,
+  },
+  inputWithVoice: {
+    flex: 1,
+    marginBottom: 0,
   },
   error: {
     color: '#c0392b',

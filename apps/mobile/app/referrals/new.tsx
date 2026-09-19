@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useSync } from '@/context/SyncContext';
 import { loadFacilities } from '@/lib/facilitiesCache';
 import { useLanguage } from '@/lib/i18n';
+import { VoiceInputButton } from '@/components/VoiceInputButton';
 
 export default function NewReferralScreen() {
   const colorScheme = useColorScheme();
@@ -89,17 +90,22 @@ export default function NewReferralScreen() {
       })}
 
       <Text style={styles.label}>{t('referral_reason')}</Text>
-      <TextInput
-        style={[
-          styles.input,
-          { borderColor: colors.border, color: colors.text, backgroundColor: colors.card },
-        ]}
-        placeholder="Why does this patient need to be seen elsewhere? (synthetic demo data only)"
-        placeholderTextColor={colors.muted}
-        value={reason}
-        onChangeText={setReason}
-        multiline
-      />
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('referral_reasonHint')}</Text>
+      <View style={styles.inputRow} lightColor="transparent" darkColor="transparent">
+        <TextInput
+          style={[
+            styles.input,
+            styles.inputWithVoice,
+            { borderColor: colors.border, color: colors.text, backgroundColor: colors.card },
+          ]}
+          placeholder="synthetic demo data only"
+          placeholderTextColor={colors.muted}
+          value={reason}
+          onChangeText={setReason}
+          multiline
+        />
+        <VoiceInputButton onResult={(text) => setReason((prev) => (prev ? `${prev} ${text}` : text))} />
+      </View>
 
       {error && <Text style={styles.error}>{error}</Text>}
 
@@ -131,6 +137,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     marginTop: 16,
+  },
+  hint: {
+    fontSize: 12,
+    marginTop: 2,
     marginBottom: 8,
   },
   facilityRow: {
@@ -148,6 +158,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
     textTransform: 'capitalize',
   },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
   input: {
     borderWidth: 1,
     borderRadius: 12,
@@ -156,6 +171,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     minHeight: 90,
     textAlignVertical: 'top',
+  },
+  inputWithVoice: {
+    flex: 1,
   },
   error: {
     color: '#c0392b',

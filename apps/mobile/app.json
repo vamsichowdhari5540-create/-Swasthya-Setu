@@ -47,7 +47,8 @@
           "cameraPermission": "SwasthyaSetu uses the camera for video teleconsultations.",
           "microphonePermission": "SwasthyaSetu uses the microphone for teleconsultations."
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true

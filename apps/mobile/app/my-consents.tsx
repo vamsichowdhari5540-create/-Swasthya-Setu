@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
@@ -151,6 +152,7 @@ export default function MyConsentsScreen() {
 
       <Link href="/my-audit" asChild>
         <Pressable style={StyleSheet.flatten([styles.auditLink, { borderColor: colors.border }])}>
+          <Ionicons name="document-text-outline" size={18} color={colors.tint} />
           <Text style={[styles.auditLinkText, { color: colors.tint }]}>{t('consent_viewAuditLog')}</Text>
         </Pressable>
       </Link>
@@ -227,10 +229,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   auditLink: {
+    flexDirection: 'row',
+    gap: 8,
     borderWidth: 1,
     borderRadius: 14,
+    minHeight: 48,
     paddingVertical: 14,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
   },
   auditLinkText: {

@@ -52,6 +52,7 @@ export default function RegisterPatientScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={styles.label}>{t('register_fullName')}</Text>
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('register_fullNameHint')}</Text>
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
         placeholder="e.g. Lakshmi Devi"
@@ -61,6 +62,7 @@ export default function RegisterPatientScreen() {
       />
 
       <Text style={styles.label}>{t('register_dob')}</Text>
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('register_dobHint')}</Text>
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
         placeholder="YYYY-MM-DD"
@@ -70,6 +72,7 @@ export default function RegisterPatientScreen() {
       />
 
       <Text style={styles.label}>{t('register_sex')}</Text>
+      <Text style={[styles.hint, { color: colors.muted }]}>{t('register_sexHint')}</Text>
       <View style={styles.chipsRow} lightColor="transparent" darkColor="transparent">
         {SEX_OPTIONS.map((option) => {
           const active = option === sex;
@@ -108,14 +111,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '700',
-    marginBottom: 8,
     marginTop: 16,
+  },
+  hint: {
+    fontSize: 12,
+    marginTop: 2,
+    marginBottom: 8,
   },
   input: {
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
+    minHeight: 48,
     fontSize: 15,
   },
   chipsRow: {
@@ -124,9 +132,11 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipText: {
     fontSize: 13,

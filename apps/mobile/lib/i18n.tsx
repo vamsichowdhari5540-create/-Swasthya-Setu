@@ -1,12 +1,15 @@
+import * as Localization from 'expo-localization';
+import { I18n } from 'i18n-js';
 import { createContext, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-// Phase 8: Multilingual & Accessibility (lean slice, given demo time
-// constraints — Home screen's nav and greeting switch language live,
-// proving "language can switch without breaking core navigation" without
-// re-translating every screen). Not persisted across app restarts on
-// purpose: this is a scope-limited demo of the mechanism, not the full
-// i18n rollout described for Phase 8.
+// Phase 8: Multilingual & Accessibility, on the free stack Expo's own
+// localization guide recommends — expo-localization to read the device's
+// language, i18n-js to hold and look up the translations. The per-key
+// STRINGS table below (one entry per UI string, all three languages side
+// by side) is easier to review and keep in sync than i18n-js's own
+// per-locale shape, so it stays the source of truth and gets inverted into
+// that shape once, below.
 export type AppLanguage = 'en' | 'hi' | 'te';
 
 export const LANGUAGES: { code: AppLanguage; label: string }[] = [
@@ -51,8 +54,19 @@ const STRINGS = {
   },
 
   register_fullName: { en: 'Full name', hi: 'पूरा नाम', te: 'పూర్తి పేరు' },
+  register_fullNameHint: {
+    en: "Step 1 of 3 — the patient's full name, as they'd say it themselves",
+    hi: 'चरण 1/3 — मरीज़ का पूरा नाम, जैसे वे खुद बताएं',
+    te: 'దశ 1/3 — రోగి పూర్తి పేరు, వారు స్వయంగా చెప్పినట్లు',
+  },
   register_dob: { en: 'Date of birth', hi: 'जन्म तिथि', te: 'పుట్టిన తేదీ' },
+  register_dobHint: {
+    en: 'Step 2 of 3 — format: YYYY-MM-DD, e.g. 1990-05-14',
+    hi: 'चरण 2/3 — प्रारूप: YYYY-MM-DD, जैसे 1990-05-14',
+    te: 'దశ 2/3 — ఫార్మాట్: YYYY-MM-DD, ఉదా. 1990-05-14',
+  },
   register_sex: { en: 'Sex', hi: 'लिंग', te: 'లింగం' },
+  register_sexHint: { en: 'Step 3 of 3 — tap one', hi: 'चरण 3/3 — एक चुनें', te: 'దశ 3/3 — ఒకటి నొక్కండి' },
   register_submit: { en: 'Register Patient', hi: 'मरीज़ पंजीकृत करें', te: 'రోగిని నమోదు చేయండి' },
   sex_female: { en: 'female', hi: 'महिला', te: 'స్త్రీ' },
   sex_male: { en: 'male', hi: 'पुरुष', te: 'పురుషుడు' },
@@ -79,6 +93,11 @@ const STRINGS = {
 
   referral_receivingFacility: { en: 'Receiving facility', hi: 'प्राप्तकर्ता सुविधा', te: 'స్వీకరించే సదుపాయం' },
   referral_reason: { en: 'Reason for referral', hi: 'रेफरल का कारण', te: 'రిఫరల్ కారణం' },
+  referral_reasonHint: {
+    en: 'Speak or type: why does this patient need to be seen elsewhere?',
+    hi: 'बोलें या टाइप करें: इस मरीज़ को कहीं और क्यों देखा जाना चाहिए?',
+    te: 'మాట్లాడండి లేదా టైప్ చేయండి: ఈ రోగిని వేరే చోట ఎందుకు చూడాలి?',
+  },
   referral_submit: { en: 'Create Referral', hi: 'रेफरल बनाएं', te: 'రిఫరల్ సృష్టించండి' },
 
   title_signIn: { en: 'Sign In', hi: 'साइन इन करें', te: 'సైన్ ఇన్ చేయండి' },
@@ -92,9 +111,14 @@ const STRINGS = {
 
   patient_dob: { en: 'Date of birth', hi: 'जन्म तिथि', te: 'పుట్టిన తేదీ' },
   patient_sex: { en: 'Sex', hi: 'लिंग', te: 'లింగం' },
-  patient_referButton: { en: 'Refer this patient →', hi: 'इस मरीज़ को रेफर करें →', te: 'ఈ రోగిని రిఫర్ చేయండి →' },
-  patient_aiSummaryButton: { en: 'AI Summary →', hi: 'एआई सारांश →', te: 'AI సారాంశం →' },
+  patient_referButton: { en: 'Refer this patient', hi: 'इस मरीज़ को रेफर करें', te: 'ఈ రోగిని రిఫర్ చేయండి' },
+  patient_aiSummaryButton: { en: 'AI Summary', hi: 'एआई सारांश', te: 'AI సారాంశం' },
   patient_recordVisit: { en: 'Record a visit', hi: 'विज़िट दर्ज करें', te: 'విజిట్ నమోదు చేయండి' },
+  patient_recordVisitHint: {
+    en: 'Speak or type what happened at this visit',
+    hi: 'इस विज़िट में क्या हुआ, बोलें या टाइप करें',
+    te: 'ఈ విజిట్‌లో ఏమి జరిగిందో మాట్లాడండి లేదా టైప్ చేయండి',
+  },
   patient_saveVisit: { en: 'Save Visit', hi: 'विज़िट सहेजें', te: 'విజిట్ సేవ్ చేయండి' },
   patient_timeline: { en: 'Timeline', hi: 'समयरेखा', te: 'టైమ్‌లైన్' },
   patient_noVisits: { en: 'No visits recorded yet.', hi: 'अभी तक कोई विज़िट दर्ज नहीं है।', te: 'ఇంకా ఏ విజిట్ నమోదు కాలేదు.' },
@@ -160,7 +184,7 @@ const STRINGS = {
     te: 'ప్రతి తెలిసిన సదుపాయానికి ఇప్పటికే యాక్సెస్ ఉంది.',
   },
   consent_grantAccess: { en: 'Grant access', hi: 'पहुंच दें', te: 'యాక్సెస్ ఇవ్వండి' },
-  consent_viewAuditLog: { en: 'View my audit log →', hi: 'मेरा ऑडिट लॉग देखें →', te: 'నా ఆడిట్ లాగ్ చూడండి →' },
+  consent_viewAuditLog: { en: 'View my audit log', hi: 'मेरा ऑडिट लॉग देखें', te: 'నా ఆడిట్ లాగ్ చూడండి' },
 
   audit_viewPatient: { en: 'Record viewed', hi: 'रिकॉर्ड देखा गया', te: 'రికార్డ్ చూడబడింది' },
   audit_createEncounter: { en: 'Visit recorded', hi: 'विज़िट दर्ज की गई', te: 'విజిట్ నమోదైంది' },
@@ -175,9 +199,36 @@ const STRINGS = {
     hi: 'अपना रिकॉर्ड खोजने के लिए इसे किसी फील्ड वर्कर या डॉक्टर को दिखाएं।',
     te: 'మీ రికార్డును కనుగొనడానికి దీన్ని ఫీల్డ్ వర్కర్ లేదా డాక్టర్‌కు చూపించండి.',
   },
+
+  voice_speak: { en: 'Tap to speak', hi: 'बोलने के लिए दबाएं', te: 'మాట్లాడటానికి నొక్కండి' },
+  voice_listening: { en: 'Listening…', hi: 'सुन रहा है…', te: 'వింటోంది…' },
+  voice_webOnly: {
+    en: 'Voice input works in the web version of this app only, in this build.',
+    hi: 'इस बिल्ड में आवाज़ इनपुट केवल इस ऐप के वेब संस्करण में काम करता है।',
+    te: 'ఈ బిల్డ్‌లో వాయిస్ ఇన్‌పుట్ ఈ యాప్ యొక్క వెబ్ వెర్షన్‌లో మాత్రమే పనిచేస్తుంది.',
+  },
 } as const;
 
-type StringKey = keyof typeof STRINGS;
+export type StringKey = keyof typeof STRINGS;
+
+// i18n-js wants { locale: { key: value } }, the opposite axis from STRINGS
+// above — inverted once at module load rather than hand-duplicated.
+const TRANSLATIONS = LANGUAGES.reduce<Record<AppLanguage, Record<string, string>>>(
+  (acc, { code }) => {
+    acc[code] = Object.fromEntries(Object.entries(STRINGS).map(([key, values]) => [key, values[code]]));
+    return acc;
+  },
+  {} as Record<AppLanguage, Record<string, string>>
+);
+
+const i18n = new I18n(TRANSLATIONS);
+i18n.enableFallback = true;
+i18n.defaultLocale = 'en';
+
+function detectDeviceLanguage(): AppLanguage {
+  const deviceLanguageCode = Localization.getLocales()[0]?.languageCode;
+  return LANGUAGES.some((l) => l.code === deviceLanguageCode) ? (deviceLanguageCode as AppLanguage) : 'en';
+}
 
 interface LanguageContextValue {
   language: AppLanguage;
@@ -188,16 +239,20 @@ interface LanguageContextValue {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<AppLanguage>('en');
+  // Defaults to the device's own language when it's one we support (per
+  // the Free stack's "device/platform" framing), English otherwise. Not
+  // persisted across restarts beyond that — a deliberately scoped slice of
+  // Phase 8, same as before; see README.
+  const [language, setLanguageState] = useState<AppLanguage>(detectDeviceLanguage);
 
-  const value = useMemo<LanguageContextValue>(
-    () => ({
+  const value = useMemo<LanguageContextValue>(() => {
+    i18n.locale = language;
+    return {
       language,
-      setLanguage,
-      t: (key) => STRINGS[key]?.[language] ?? STRINGS[key]?.en ?? key,
-    }),
-    [language]
-  );
+      setLanguage: setLanguageState,
+      t: (key) => i18n.t(key),
+    };
+  }, [language]);
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }

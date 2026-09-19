@@ -1,7 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
+import type { ComponentProps } from 'react';
 import type { UserRole } from '@swasthya-setu/shared-types';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
@@ -19,9 +23,12 @@ const ROLE_LABEL_KEYS: Record<UserRole, 'role_patient' | 'role_anm_asha' | 'role
 
 // `href` present = a real screen. No `href` = still a placeholder for a
 // later phase, shown so navigation visibly differs by role even before
-// every screen behind it exists.
+// every screen behind it exists. `icon` gives every action a visual
+// anchor beyond the text label, per Phase 8's "icon-led actions" for
+// low-literacy usability.
 type NavItem = {
   label: Parameters<ReturnType<typeof useLanguage>['t']>[0];
+  icon: IconName;
   href?:
     | '/my-health-id'
     | '/my-timeline'
@@ -39,26 +46,26 @@ type NavItem = {
 
 const ROLE_NAV: Record<UserRole, NavItem[]> = {
   patient: [
-    { label: 'nav_myHealthId', href: '/my-health-id' },
-    { label: 'nav_myTimeline', href: '/my-timeline' },
-    { label: 'nav_myConsents', href: '/my-consents' },
-    { label: 'nav_myReferrals', href: '/referrals/mine' },
+    { label: 'nav_myHealthId', icon: 'qr-code-outline', href: '/my-health-id' },
+    { label: 'nav_myTimeline', icon: 'time-outline', href: '/my-timeline' },
+    { label: 'nav_myConsents', icon: 'shield-checkmark-outline', href: '/my-consents' },
+    { label: 'nav_myReferrals', icon: 'swap-horizontal-outline', href: '/referrals/mine' },
   ],
   anm_asha: [
-    { label: 'nav_registerPatient', href: '/patients/register' },
-    { label: 'nav_searchPatients', href: '/patients/search' },
-    { label: 'nav_scanQr', href: '/patients/scan' },
-    { label: 'nav_sentReferrals', href: '/referrals/outgoing' },
-    { label: 'nav_syncStatus', href: '/sync-status' },
+    { label: 'nav_registerPatient', icon: 'person-add-outline', href: '/patients/register' },
+    { label: 'nav_searchPatients', icon: 'search-outline', href: '/patients/search' },
+    { label: 'nav_scanQr', icon: 'scan-outline', href: '/patients/scan' },
+    { label: 'nav_sentReferrals', icon: 'arrow-up-circle-outline', href: '/referrals/outgoing' },
+    { label: 'nav_syncStatus', icon: 'sync-outline', href: '/sync-status' },
   ],
   doctor: [
-    { label: 'nav_searchPatients', href: '/patients/search' },
-    { label: 'nav_scanQr', href: '/patients/scan' },
-    { label: 'nav_incomingReferrals', href: '/referrals/incoming' },
-    { label: 'nav_sentReferrals', href: '/referrals/outgoing' },
-    { label: 'nav_syncStatus', href: '/sync-status' },
+    { label: 'nav_searchPatients', icon: 'search-outline', href: '/patients/search' },
+    { label: 'nav_scanQr', icon: 'scan-outline', href: '/patients/scan' },
+    { label: 'nav_incomingReferrals', icon: 'arrow-down-circle-outline', href: '/referrals/incoming' },
+    { label: 'nav_sentReferrals', icon: 'arrow-up-circle-outline', href: '/referrals/outgoing' },
+    { label: 'nav_syncStatus', icon: 'sync-outline', href: '/sync-status' },
   ],
-  district_admin: [{ label: 'nav_dashboard', href: '/dashboard' }],
+  district_admin: [{ label: 'nav_dashboard', icon: 'stats-chart-outline', href: '/dashboard' }],
 };
 
 function initialsOf(fullName: string): string {
@@ -153,16 +160,21 @@ export default function HomeScreen() {
         {ROLE_NAV[profile.role].map((item) =>
           item.href ? (
             <Link key={item.label} href={item.href} asChild>
-              <Pressable>
-                <Text style={[styles.navItem, styles.navItemLink, { color: colors.tint }]}>
-                  •  {t(item.label)}
-                </Text>
+              <Pressable style={StyleSheet.flatten([styles.navRow, { borderColor: colors.border }])}>
+                <View style={[styles.navIconCircle, { backgroundColor: colors.tint }]}>
+                  <Ionicons name={item.icon} size={22} color="#fff" />
+                </View>
+                <Text style={[styles.navItem, styles.navItemLink, { color: colors.text }]}>{t(item.label)}</Text>
+                <Ionicons name="chevron-forward" size={20} color={colors.muted} />
               </Pressable>
             </Link>
           ) : (
-            <Text key={item.label} style={[styles.navItem, { color: colors.muted }]}>
-              •  {t(item.label)}
-            </Text>
+            <View key={item.label} style={[styles.navRow, { borderColor: colors.border }]}>
+              <View style={[styles.navIconCircle, { backgroundColor: colors.border }]}>
+                <Ionicons name={item.icon} size={22} color={colors.muted} />
+              </View>
+              <Text style={[styles.navItem, { color: colors.muted }]}>{t(item.label)}</Text>
+            </View>
           )
         )}
       </View>
@@ -183,9 +195,11 @@ const styles = StyleSheet.create({
   },
   langChip: {
     borderWidth: 1.5,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   center: {
     flex: 1,
@@ -270,9 +284,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 10,
   },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    minHeight: 56,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    marginTop: 8,
+  },
+  navIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   navItem: {
-    fontSize: 14,
-    marginBottom: 4,
+    flex: 1,
+    fontSize: 15,
   },
   navItemLink: {
     fontWeight: '600',
