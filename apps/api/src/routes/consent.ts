@@ -9,13 +9,19 @@ import { recordAudit } from '../patients/audit';
 
 export const consentRouter = Router();
 
-const CONSENT_SELECT = 'id, patient_id, facility_id, granted_at, revoked_at, facilities(name)';
+const CONSENT_SELECT = 'id, patient_id, facility_id, granted_at, expires_at, revoked_at, facilities(name)';
+
+// ABDM-style consent artifacts always carry a validity period; this is
+// the one this backend grants by default. Re-granting after expiry (or
+// after revoking) starts a fresh window rather than extending the old one.
+const CONSENT_VALIDITY_DAYS = 90;
 
 function toConsent(row: {
   id: string;
   patient_id: string;
   facility_id: string;
   granted_at: string;
+  expires_at: string | null;
   revoked_at: string | null;
   facilities: { name: string }[] | { name: string } | null;
 }): Consent {
@@ -26,6 +32,7 @@ function toConsent(row: {
     facilityId: row.facility_id,
     facilityName: facility?.name ?? 'Unknown facility',
     grantedAt: row.granted_at,
+    expiresAt: row.expires_at,
     revokedAt: row.revoked_at,
   };
 }
@@ -70,12 +77,16 @@ consentRouter.post(
       return;
     }
 
+    const nowIso = new Date().toISOString();
     const { data: existing, error: existingError } = await supabase
       .from('consents')
       .select('id')
       .eq('patient_id', req.patient!.id)
       .eq('facility_id', facilityId)
       .is('revoked_at', null)
+      // An expired-but-never-revoked grant shouldn't block re-granting —
+      // only a currently active one should.
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
       .limit(1);
 
     if (existingError) {
@@ -87,9 +98,15 @@ consentRouter.post(
       return;
     }
 
+    const expiresAt = new Date(Date.now() + CONSENT_VALIDITY_DAYS * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from('consents')
-      .insert({ patient_id: req.patient!.id, facility_id: facilityId, granted_by: req.user!.id })
+      .insert({
+        patient_id: req.patient!.id,
+        facility_id: facilityId,
+        granted_by: req.user!.id,
+        expires_at: expiresAt,
+      })
       .select(CONSENT_SELECT)
       .single();
 

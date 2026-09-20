@@ -63,6 +63,7 @@ export interface Consent {
   facilityId: string;
   facilityName: string;
   grantedAt: string;
+  expiresAt: string | null;
   revokedAt: string | null;
 }
 
@@ -72,6 +73,7 @@ export type AuditAction =
   | 'grant_consent'
   | 'revoke_consent'
   | 'generate_summary'
+  | 'edit_summary'
   | 'approve_summary'
   | 'create_referral'
   | 'accept_referral'

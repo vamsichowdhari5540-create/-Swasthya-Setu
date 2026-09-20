@@ -21,6 +21,10 @@ export async function canAccessPatient(
     .eq('patient_id', patient.id)
     .eq('facility_id', user.facilityId)
     .is('revoked_at', null)
+    // A null expires_at is a pre-expiry grant, grandfathered rather than
+    // treated as already expired; every grant created after the column
+    // was added always sets a real one (see routes/consent.ts).
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     .limit(1);
 
   return !error && (data?.length ?? 0) > 0;

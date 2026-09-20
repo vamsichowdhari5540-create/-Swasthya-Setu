@@ -17,6 +17,7 @@ const ACTION_LABEL_KEYS: Record<
   | 'audit_grantConsent'
   | 'audit_revokeConsent'
   | 'audit_generateSummary'
+  | 'audit_editSummary'
   | 'audit_approveSummary'
   | 'audit_createReferral'
   | 'audit_acceptReferral'
@@ -29,6 +30,7 @@ const ACTION_LABEL_KEYS: Record<
   grant_consent: 'audit_grantConsent',
   revoke_consent: 'audit_revokeConsent',
   generate_summary: 'audit_generateSummary',
+  edit_summary: 'audit_editSummary',
   approve_summary: 'audit_approveSummary',
   create_referral: 'audit_createReferral',
   accept_referral: 'audit_acceptReferral',

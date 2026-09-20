@@ -191,6 +191,7 @@ const STRINGS = {
   audit_grantConsent: { en: 'Consent granted', hi: 'सहमति दी गई', te: 'సమ్మతి ఇవ్వబడింది' },
   audit_revokeConsent: { en: 'Consent revoked', hi: 'सहमति रद्द की गई', te: 'సమ్మతి రద్దు చేయబడింది' },
   audit_generateSummary: { en: 'AI summary generated', hi: 'एआई सारांश बनाया गया', te: 'AI సారాంశం రూపొందించబడింది' },
+  audit_editSummary: { en: 'AI summary edited', hi: 'एआई सारांश संपादित', te: 'AI సారాంశం సవరించబడింది' },
   audit_approveSummary: { en: 'AI summary approved', hi: 'एआई सारांश स्वीकृत', te: 'AI సారాంశం ఆమోదించబడింది' },
   audit_createReferral: { en: 'Referral created', hi: 'रेफरल बनाया गया', te: 'రిఫరల్ సృష్టించబడింది' },
   audit_acceptReferral: { en: 'Referral accepted', hi: 'रेफरल स्वीकार किया गया', te: 'రిఫరల్ ఆమోదించబడింది' },

@@ -286,3 +286,25 @@ create index if not exists audit_events_patient_id_idx on audit_events (patient_
 -- 200 events on every load.
 create index if not exists audit_events_created_at_idx
   on audit_events (created_at desc);
+
+-- Post-demo hardening: a consent grant had no expiry, no stated purpose
+-- and no scope — active forever until the patient manually revoked it.
+-- ABDM's consent artifact model expects all three; this adds the one that
+-- matters most for access control. Nullable and NOT backfilled on
+-- existing rows: a pre-existing grant keeps working as "no expiry set"
+-- (see the .or() clause added to canAccessPatient) rather than being
+-- silently revoked by a schema change, while every new grant going
+-- forward gets a real expiry from the API.
+alter table consents add column if not exists expires_at timestamptz;
+
+-- Editing a draft summary before approval was the one clinically
+-- meaningful action on the audit-covered list that wasn't actually
+-- writing to it.
+alter table audit_events drop constraint if exists audit_events_action_check;
+alter table audit_events add constraint audit_events_action_check
+  check (action in (
+    'view_patient', 'create_encounter', 'grant_consent', 'revoke_consent',
+    'generate_summary', 'edit_summary', 'approve_summary',
+    'create_referral', 'accept_referral', 'complete_referral',
+    'reassign_referral', 'cancel_referral'
+  ));

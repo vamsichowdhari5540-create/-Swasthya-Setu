@@ -19,13 +19,13 @@ interface EncounterNarrativeRow {
   facilities: { name: string }[] | { name: string } | null;
 }
 
-// Two renderings of the same timeline: `named` is what a clinician reads
-// and what gets saved when no model produces a narrative; `deidentified`
-// is the only one that leaves this backend for Groq or Gemini.
-async function loadTimelineNarrative(
-  patientId: string,
-  patientName: string
-): Promise<{ named: string; deidentified: string }> {
+// Always rendered as "the patient" — this is both the input sent to Groq
+// or Gemini and the saved template fallback if neither produces a
+// narrative, so a doctor never sees one summary that names the patient
+// and another for the same visit that doesn't. The screen that displays
+// this already shows the patient's real name above it, so there's
+// nowhere the identity actually goes missing.
+async function loadTimelineNarrative(patientId: string): Promise<string> {
   const supabase = getSupabase()!;
   const { data } = await supabase
     .from('encounters')
@@ -43,10 +43,7 @@ async function loadTimelineNarrative(
     };
   });
 
-  return {
-    named: buildTemplateSummary(patientName, encounters),
-    deidentified: buildTemplateSummary(DEIDENTIFIED_SUBJECT, encounters),
-  };
+  return buildTemplateSummary(DEIDENTIFIED_SUBJECT, encounters);
 }
 
 // Any staff with access to the patient can ask for a draft; per the exit
@@ -60,8 +57,8 @@ summariesRouter.post(
   async (req, res) => {
     const supabase = getSupabase()!;
     const patient = req.patient!;
-    const timeline = await loadTimelineNarrative(patient.id, patient.fullName);
-    const generated = await generateSummary(timeline.deidentified);
+    const templateSummary = await loadTimelineNarrative(patient.id);
+    const generated = await generateSummary(templateSummary);
 
     const values: Record<string, unknown> = {
       patient_id: patient.id,
@@ -70,7 +67,7 @@ summariesRouter.post(
       source: generated.source,
       model: generated.model,
       model_version: generated.modelVersion,
-      draft_text: generated.draftText ?? timeline.named,
+      draft_text: generated.draftText ?? templateSummary,
       triage_level: generated.triageLevel,
       triage_rationale: generated.triageRationale,
     };
@@ -179,6 +176,14 @@ summariesRouter.patch(
       res.status(500).json({ error: error?.message ?? 'Could not save the edit.' });
       return;
     }
+
+    await recordAudit(supabase, {
+      patientId: summary.patientId,
+      actorId: req.user!.id,
+      action: 'edit_summary',
+      metadata: { summaryId: summary.id },
+    });
+
     res.json(toSummary(data as unknown as SummaryRow));
   }
 );

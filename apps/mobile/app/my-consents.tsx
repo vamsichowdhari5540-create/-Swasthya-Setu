@@ -111,6 +111,7 @@ export default function MyConsentsScreen() {
             <Text style={styles.facilityName}>{consent.facilityName}</Text>
             <Text style={[styles.meta, { color: colors.muted }]}>
               Granted {new Date(consent.grantedAt).toLocaleDateString()}
+              {consent.expiresAt ? ` · Expires ${new Date(consent.expiresAt).toLocaleDateString()}` : ''}
             </Text>
             <Pressable
               style={[styles.revokeButton, { borderColor: '#c0392b' }]}
