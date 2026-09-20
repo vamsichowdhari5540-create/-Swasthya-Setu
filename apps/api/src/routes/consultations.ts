@@ -153,13 +153,20 @@ consultationsRouter.patch('/consultations/:id/end', verifyAuth, loadConsultation
   // ordinary append-only encounter, same pattern as a completed referral.
   // Attributed to the receiving facility regardless of which side actually
   // pressed "end" (a patient ending the call has no facility of their own).
+  //
+  // recorded_by is medical-record authorship, not "who clicked End" — a
+  // patient is allowed to end their own call, and encounters can never be
+  // edited or deleted, so crediting the presser would let a patient write
+  // a permanent entry into their own record under their own name. A
+  // consultation only exists for an accepted referral, so the accepting
+  // doctor is always present; that's who authored the visit.
   const minutes = Math.round(durationSeconds / 60);
   const { data: encounter } = await supabase
     .from('encounters')
     .insert({
       patient_id: finished.patientId,
       facility_id: req.consultationReferral!.receivingFacilityId,
-      recorded_by: req.user!.id,
+      recorded_by: req.consultationReferral!.acceptedByUserId ?? req.user!.id,
       notes: `Teleconsultation (${finished.mode}) completed. Duration: ${minutes} minute${minutes === 1 ? '' : 's'}.`,
     })
     .select('id')
