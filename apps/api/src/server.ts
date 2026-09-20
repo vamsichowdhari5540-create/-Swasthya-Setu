@@ -2,6 +2,8 @@ import http from 'node:http';
 
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 import { env } from './env';
 import { healthRouter } from './routes/health';
@@ -20,7 +22,25 @@ import { initRealtime } from './realtime/socket';
 
 const app = express();
 
-app.use(cors());
+// Undefined origins list means unrestricted — see env.ts. Once the real
+// frontend URLs are known this should always be set; until then this
+// keeps today's behavior rather than locking out a deployment nobody's
+// configured yet.
+app.use(cors(env.corsOrigins ? { origin: env.corsOrigins } : {}));
+app.use(helmet());
+// A generic ceiling against scripted abuse (the enumeration class of bug
+// fixed in patients/search.ts, or simple credential-stuffing against
+// /auth), not tuned to any endpoint's real traffic shape — a few staff
+// behind one hospital's NAT should never come close to it.
+app.use(
+  '/api',
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 600,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+);
 app.use(express.json());
 app.use('/api', healthRouter);
 app.use('/api', authRouter);

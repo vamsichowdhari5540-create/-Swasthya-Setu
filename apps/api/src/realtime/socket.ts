@@ -12,6 +12,7 @@ import {
 } from '@swasthya-setu/shared-types';
 
 import { getSupabase } from '../supabaseClient';
+import { env } from '../env';
 
 let io: IOServer | null = null;
 
@@ -21,7 +22,9 @@ let io: IOServer | null = null;
 // receives (or misses) an event can still get the right answer by
 // re-fetching, which every referral screen does anyway.
 export function initRealtime(httpServer: HttpServer): IOServer {
-  io = new IOServer(httpServer, { cors: { origin: '*' } });
+  // Same origins list as the REST API's CORS config (env.ts) — undefined
+  // keeps the previous wide-open behavior until real frontend URLs are set.
+  io = new IOServer(httpServer, { cors: { origin: env.corsOrigins ?? '*' } });
 
   io.use(async (socket, next) => {
     const supabase = getSupabase();

@@ -17,4 +17,14 @@ export const env = {
   supabaseServiceRoleKey: optional('SUPABASE_SERVICE_ROLE_KEY'),
   groqApiKey: optional('GROQ_API_KEY'),
   geminiApiKey: optional('GEMINI_API_KEY'),
+  // Comma-separated list of allowed origins for CORS and Socket.IO (e.g.
+  // "https://swasthyasetu.vercel.app,https://swasthyasetu-admin.vercel.app").
+  // Undefined means "no restriction" — the wide-open default this
+  // replaces — so a deployment that hasn't set it yet doesn't break, but
+  // it should always be set once the real frontend URLs are known.
+  corsOrigins: optional('CORS_ORIGINS')?.split(',').map((s) => s.trim()).filter(Boolean),
+  // Defaults to enabled so an existing demo deployment keeps working
+  // without any action — set to "false" once judging is over, since this
+  // endpoint deletes the append-only audit trail on request.
+  allowDemoReset: optional('ALLOW_DEMO_RESET') !== 'false',
 };

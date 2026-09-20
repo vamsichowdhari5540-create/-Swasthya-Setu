@@ -63,12 +63,15 @@ patientsRouter.get('/patients/search', verifyAuth, requireRole('anm_asha', 'doct
   const supabase = getSupabase()!;
   // Strip characters that are syntactically meaningful in PostgREST's
   // .or() filter grammar (`,()`) so the query can't be reshaped by input,
-  // and the LIKE wildcards (`%_`) so a query can't widen its own match —
-  // `?q=%` would otherwise walk the whole patient directory 20 rows at a
-  // time. A directory lookup has to be a lookup, not an enumeration.
+  // and the LIKE wildcards so a query can't widen its own match — `?q=%`
+  // would otherwise walk the whole patient directory 20 rows at a time.
+  // PostgREST treats `*` as an alias for `%` specifically so a caller
+  // doesn't have to URL-encode `%` (see their docs on the `ilike` filter),
+  // so both have to be stripped or `?q=**` reopens the exact same hole.
+  // A directory lookup has to be a lookup, not an enumeration.
   const q = String(req.query.q ?? '')
     .trim()
-    .replace(/[,()%_]/g, '');
+    .replace(/[,()%_*]/g, '');
   // Two characters is the shortest that still narrows anything; a
   // single letter is a directory dump by another name.
   if (q.length < 2) {
