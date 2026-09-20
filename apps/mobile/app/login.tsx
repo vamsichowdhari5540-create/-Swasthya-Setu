@@ -59,6 +59,14 @@ export default function LoginScreen() {
         {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('login_signIn')}</Text>}
       </Pressable>
 
+      <Link href="/forgot-password" style={styles.link}>
+        <Text style={[styles.linkText, { color: colors.tint }]}>{t('login_forgotPassword')}</Text>
+      </Link>
+
+      <Link href="/signup" style={styles.link}>
+        <Text style={[styles.linkText, { color: colors.tint }]}>{t('login_createAccount')}</Text>
+      </Link>
+
       <Link href="/consent" style={styles.link}>
         <Text style={[styles.linkText, { color: colors.tint }]}>{t('login_dataAccess')}</Text>
       </Link>

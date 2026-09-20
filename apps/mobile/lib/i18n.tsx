@@ -52,6 +52,73 @@ const STRINGS = {
     hi: 'डेमो खाते (पासवर्ड: Demo@1234)',
     te: 'డెమో ఖాతాలు (పాస్‌వర్డ్: Demo@1234)',
   },
+  login_createAccount: { en: 'Create an account', hi: 'खाता बनाएं', te: 'ఖాతా సృష్టించండి' },
+  login_forgotPassword: { en: 'Forgot password?', hi: 'पासवर्ड भूल गए?', te: 'పాస్‌వర్డ్ మర్చిపోయారా?' },
+
+  signup_title: { en: 'Create Account', hi: 'खाता बनाएं', te: 'ఖాతా సృష్టించండి' },
+  signup_subtitle: {
+    en: 'Sign up with your real email — used for sign-in and password reset',
+    hi: 'अपने असली ईमेल से साइन अप करें — साइन इन और पासवर्ड रीसेट के लिए उपयोग होगा',
+    te: 'మీ నిజమైన ఇమెయిల్‌తో సైన్ అప్ చేయండి — సైన్ ఇన్, పాస్‌వర్డ్ రీసెట్‌కు వాడతాం',
+  },
+  signup_fullName: { en: 'Full name', hi: 'पूरा नाम', te: 'పూర్తి పేరు' },
+  signup_role: { en: 'I am a…', hi: 'मैं हूँ…', te: 'నేను ఒక…' },
+  signup_facility: { en: 'Facility', hi: 'सुविधा केंद्र', te: 'ఫెసిలిటీ' },
+  signup_facilityHint: {
+    en: 'Required for ANM/ASHA and Doctor accounts',
+    hi: 'एएनएम/आशा और डॉक्टर खातों के लिए आवश्यक',
+    te: 'ANM/ఆశా మరియు డాక్టర్ ఖాతాలకు తప్పనిసరి',
+  },
+  signup_selectFacility: { en: 'Select a facility', hi: 'सुविधा केंद्र चुनें', te: 'ఫెసిలిటీని ఎంచుకోండి' },
+  signup_submit: { en: 'Create Account', hi: 'खाता बनाएं', te: 'ఖాతా సృష్టించండి' },
+  signup_alreadyHaveAccount: {
+    en: 'Already have an account? Sign in',
+    hi: 'पहले से खाता है? साइन इन करें',
+    te: 'ఇప్పటికే ఖాతా ఉందా? సైన్ ఇన్ చేయండి',
+  },
+  signup_checkEmail: {
+    en: 'Check your email to confirm your account, then sign in.',
+    hi: 'अपना खाता पुष्टि करने के लिए अपना ईमेल देखें, फिर साइन इन करें।',
+    te: 'మీ ఖాతాను నిర్ధారించడానికి మీ ఇమెయిల్ చూడండి, తర్వాత సైన్ ఇన్ చేయండి.',
+  },
+  signup_facilityRequired: {
+    en: 'Select a facility for this role.',
+    hi: 'इस भूमिका के लिए एक सुविधा केंद्र चुनें।',
+    te: 'ఈ పాత్రకు ఒక ఫెసిలిటీని ఎంచుకోండి.',
+  },
+
+  forgot_title: { en: 'Reset your password', hi: 'अपना पासवर्ड रीसेट करें', te: 'మీ పాస్‌వర్డ్ రీసెట్ చేయండి' },
+  forgot_subtitle: {
+    en: "Enter your email and we'll send you a reset link",
+    hi: 'अपना ईमेल दर्ज करें, हम आपको एक रीसेट लिंक भेजेंगे',
+    te: 'మీ ఇమెయిల్ ఇవ్వండి, మేము రీసెట్ లింక్ పంపుతాము',
+  },
+  forgot_submit: { en: 'Send reset link', hi: 'रीसेट लिंक भेजें', te: 'రీసెట్ లింక్ పంపండి' },
+  forgot_sent: {
+    en: 'If an account exists for that email, a reset link is on its way. Check your inbox.',
+    hi: 'यदि उस ईमेल के लिए कोई खाता है, तो रीसेट लिंक भेजा जा रहा है। अपना इनबॉक्स देखें।',
+    te: 'ఆ ఇమెయిల్‌కు ఖాతా ఉంటే, రీసెట్ లింక్ పంపబడుతోంది. మీ ఇన్‌బాక్స్ చూడండి.',
+  },
+  forgot_backToSignIn: { en: 'Back to sign in', hi: 'साइन इन पर वापस जाएं', te: 'సైన్ ఇన్‌కు తిరిగి వెళ్లండి' },
+
+  reset_title: { en: 'Set a new password', hi: 'नया पासवर्ड सेट करें', te: 'కొత్త పాస్‌వర్డ్ సెట్ చేయండి' },
+  reset_newPassword: { en: 'New password', hi: 'नया पासवर्ड', te: 'కొత్త పాస్‌వర్డ్' },
+  reset_submit: { en: 'Update password', hi: 'पासवर्ड अपडेट करें', te: 'పాస్‌వర్డ్ అప్‌డేట్ చేయండి' },
+  reset_success: {
+    en: 'Password updated. You can sign in now.',
+    hi: 'पासवर्ड अपडेट हो गया। अब आप साइन इन कर सकते हैं।',
+    te: 'పాస్‌వర్డ్ అప్‌డేట్ అయ్యింది. ఇప్పుడు మీరు సైన్ ఇన్ చేయవచ్చు.',
+  },
+  reset_invalidLink: {
+    en: 'This reset link is invalid or has expired. Request a new one.',
+    hi: 'यह रीसेट लिंक अमान्य है या समाप्त हो गया है। एक नया अनुरोध करें।',
+    te: 'ఈ రీసెట్ లింక్ చెల్లదు లేదా గడువు ముగిసింది. కొత్తది అభ్యర్థించండి.',
+  },
+  reset_webOnly: {
+    en: 'Open the link from your email in a web browser to reset your password.',
+    hi: 'अपना पासवर्ड रीसेट करने के लिए अपने ईमेल का लिंक वेब ब्राउज़र में खोलें।',
+    te: 'మీ పాస్‌వర్డ్ రీసెట్ చేయడానికి మీ ఇమెయిల్‌లోని లింక్‌ను వెబ్ బ్రౌజర్‌లో తెరవండి.',
+  },
 
   register_fullName: { en: 'Full name', hi: 'पूरा नाम', te: 'పూర్తి పేరు' },
   register_fullNameHint: {
@@ -101,6 +168,8 @@ const STRINGS = {
   referral_submit: { en: 'Create Referral', hi: 'रेफरल बनाएं', te: 'రిఫరల్ సృష్టించండి' },
 
   title_signIn: { en: 'Sign In', hi: 'साइन इन करें', te: 'సైన్ ఇన్ చేయండి' },
+  title_signUp: { en: 'Create Account', hi: 'खाता बनाएं', te: 'ఖాతా సృష్టించండి' },
+  title_forgotPassword: { en: 'Reset Password', hi: 'पासवर्ड रीसेट करें', te: 'పాస్‌వర్డ్ రీసెట్ చేయండి' },
   title_consent: { en: 'Privacy & Consent', hi: 'गोपनीयता और सहमति', te: 'గోప్యత & సమ్మతి' },
   title_myAudit: { en: 'My Audit Log', hi: 'मेरा ऑडिट लॉग', te: 'నా ఆడిట్ లాగ్' },
   title_scanQr: { en: 'Scan QR Code', hi: 'QR कोड स्कैन करें', te: 'QR కోడ్ స్కాన్ చేయండి' },

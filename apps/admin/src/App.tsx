@@ -1,9 +1,22 @@
+import { useState } from 'react';
+
 import { Dashboard } from './Dashboard';
+import { ForgotPassword } from './ForgotPassword';
 import { Login } from './Login';
+import { ResetPassword } from './ResetPassword';
 import { useAuth } from './lib/useAuth';
 
 export default function App() {
   const { state, signIn, signOut } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // This app has no client-side router, so the one other "route" it needs
+  // to recognize is just a literal pathname check. vercel.json's SPA
+  // rewrite already sends every path to this same index.html, so this is
+  // reachable exactly the way any other route would be.
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />;
+  }
 
   if (state.kind === 'loading') {
     return (
@@ -14,7 +27,10 @@ export default function App() {
   }
 
   if (state.kind === 'signedOut') {
-    return <Login onSignIn={signIn} />;
+    if (showForgotPassword) {
+      return <ForgotPassword onBack={() => setShowForgotPassword(false)} />;
+    }
+    return <Login onSignIn={signIn} onForgotPassword={() => setShowForgotPassword(true)} />;
   }
 
   // The role check happens here, not just server-side: every dashboard/

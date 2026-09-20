@@ -95,6 +95,54 @@ the `patients` table, so after a reset `patient@...`/`patient2@...` are
 logins with no linked record until a new patient is registered and
 re-linked the same way.
 
+### Real sign-up (every role, real email/password)
+
+The demo accounts above are one path in; the mobile app's **Sign Up** screen
+(and `apps/mobile/app/forgot-password.tsx` / `reset-password.tsx`) is a
+second, independent one — real Supabase Auth accounts under whatever email
+someone actually enters, not seeded credentials. This is what lets several
+people demo the app from their own devices at once instead of everyone
+sharing `Demo@1234`.
+
+- **Every role is self-service**, including District Admin — there's no
+  invite code or approval step. That's a deliberate choice for a judged
+  demo (see the design discussion that led here), not something to carry
+  into a real deployment: anyone can currently self-declare as a doctor
+  or admin.
+- ANM/ASHA and Doctor signups pick a facility from a dropdown
+  (`GET /api/facilities/public` — the one facilities route that doesn't
+  require a session, since none exists yet at signup time).
+- Profile creation happens via a Postgres trigger
+  (`handle_new_user` in `supabase/schema.sql`), not an API call — it reads
+  `full_name`/`role`/`facility_id` out of `raw_user_meta_data` and inserts
+  the matching `profiles` row in the same transaction as `auth.users`, so
+  there's never a signed-up account with no role.
+- **A self-signed-up patient still isn't linked to a `patients` row** —
+  same limitation as the demo patient accounts above. An ANM/ASHA has to
+  register them and someone has to set `patients.user_id`, since there's
+  still no self-service "this is my record" flow.
+- Password reset redirects to a web page (`/reset-password`, on whichever
+  app's origin sent the email — mobile web or the admin console), never a
+  native deep link: the email might be opened on a device that doesn't
+  have the app installed, and a web page works everywhere. After setting a
+  new password, sign in again normally (native app included).
+
+**Two things need setting once in the Supabase dashboard, since neither is
+reachable from this codebase — no API token is checked into anything for
+this project:**
+
+1. **Authentication → URL Configuration → Redirect URLs** — add
+   `https://swasthya-sethu.vercel.app/reset-password` and
+   `https://swasthya-sethu-admin.vercel.app/reset-password` (plus
+   `http://localhost:8081/reset-password` for local dev). Supabase silently
+   drops `resetPasswordForEmail`'s `redirectTo` if it isn't on this list.
+2. **Authentication → Providers → Email → Confirm email.** Leaving this on
+   means a real verified-email flow (recommended); the free project's
+   built-in email sending is rate-limited to a handful of emails per hour,
+   which matters if several people sign up back-to-back right before a
+   demo — send the confirmation emails a bit ahead of time, or turn
+   confirmation off temporarily if that limit becomes the bottleneck.
+
 ## Phase 0 exit test
 
 Clone, `npm install`, start the API, start the mobile app, and see the

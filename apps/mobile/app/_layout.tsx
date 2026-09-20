@@ -84,16 +84,29 @@ function RootLayoutNav() {
 
   useEffect(() => {
     if (loading) return;
-    const inAuthGroup = segments[0] === 'login' || segments[0] === 'consent';
+    // Reachable without a session, and kicked to /login if there isn't one.
+    const signedOutOnly = segments[0] === 'login' || segments[0] === 'signup' || segments[0] === 'forgot-password';
+    // Reachable either way, never redirected. reset-password is the reason
+    // this category exists at all: exchangeCodeForSession there creates a
+    // real (if narrowly-scoped, recovery-only) session, so treating it like
+    // login/signup would bounce the user straight to "/" mid-reset, before
+    // they ever see the new-password form.
+    const alwaysAllowed = segments[0] === 'consent' || segments[0] === 'reset-password';
 
-    if (!session && !inAuthGroup) {
+    if (!session && !signedOutOnly && !alwaysAllowed) {
       router.replace('/login');
-    } else if (session && inAuthGroup) {
+    } else if (session && signedOutOnly) {
       router.replace('/');
     }
   }, [session, loading, segments, router]);
 
-  if (loading) {
+  // reset-password deliberately keeps rendering through a loading flip:
+  // exchangeCodeForSession succeeding is exactly what turns loading true
+  // for a moment (AuthContext resolving the new recovery session's
+  // profile), and unmounting the Stack here would reset that screen's own
+  // state — re-running the exchange against a code Supabase already
+  // consumed, which fails and shows "invalid link" for a link that wasn't.
+  if (loading && segments[0] !== 'reset-password') {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator color={colors.tint} />
@@ -106,6 +119,9 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="index" options={{ title: 'SwasthyaSetu' }} />
         <Stack.Screen name="login" options={{ title: t('title_signIn'), headerShown: false }} />
+        <Stack.Screen name="signup" options={{ title: t('title_signUp') }} />
+        <Stack.Screen name="forgot-password" options={{ title: t('title_forgotPassword') }} />
+        <Stack.Screen name="reset-password" options={{ title: t('title_forgotPassword'), headerShown: false }} />
         <Stack.Screen name="consent" options={{ title: t('title_consent') }} />
         <Stack.Screen name="my-health-id" options={{ title: t('nav_myHealthId') }} />
         <Stack.Screen name="my-timeline" options={{ title: t('nav_myTimeline') }} />

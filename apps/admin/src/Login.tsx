@@ -1,6 +1,12 @@
 import { useState } from 'react';
 
-export function Login({ onSignIn }: { onSignIn: (email: string, password: string) => Promise<string | null> }) {
+export function Login({
+  onSignIn,
+  onForgotPassword,
+}: {
+  onSignIn: (email: string, password: string) => Promise<string | null>;
+  onForgotPassword: () => void;
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +44,13 @@ export function Login({ onSignIn }: { onSignIn: (email: string, password: string
         <button type="submit" disabled={submitting || !email || !password}>
           {submitting ? 'Signing in…' : 'Sign In'}
         </button>
+        <button type="button" className="ghost" onClick={onForgotPassword}>
+          Forgot password?
+        </button>
+        <p className="muted small">
+          No account yet? District Admin accounts are created from the mobile app's sign-up screen — the same
+          Supabase project backs both.
+        </p>
         <p className="muted small">Demo: admin@demo.swasthyasetu.app / Demo@1234</p>
       </form>
     </div>

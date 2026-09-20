@@ -308,3 +308,37 @@ alter table audit_events add constraint audit_events_action_check
     'create_referral', 'accept_referral', 'complete_referral',
     'reassign_referral', 'cancel_referral'
   ));
+
+-- Real self-service signup, replacing the seed-script-only demo accounts.
+-- profiles has no insert policy for a reason — a client picking its own
+-- role is exactly the kind of write that must never be trusted to RLS.
+-- This function runs as its definer (the table owner), not the calling
+-- user, so it can insert on their behalf from inside the same transaction
+-- that creates their auth.users row — there is no window where the user
+-- exists without a profile. full_name/role/facility_id come from the
+-- signUp() call's `options.data`, which Supabase copies verbatim into
+-- raw_user_meta_data; nothing here re-validates that role is one of the
+-- four legal values because the existing profiles_role_check constraint
+-- already rejects the insert (and so the whole signup) if it isn't.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, full_name, role, facility_id)
+  values (
+    new.id,
+    new.email,
+    coalesce(nullif(trim(new.raw_user_meta_data->>'full_name'), ''), split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'role', 'patient'),
+    nullif(new.raw_user_meta_data->>'facility_id', '')::uuid
+  );
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
