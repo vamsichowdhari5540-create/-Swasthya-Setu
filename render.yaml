@@ -27,3 +27,9 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      # Not a secret — the two deployed frontend origins, so the API only
+      # answers CORS/Socket.IO requests from them instead of any website.
+      # A committed `value` (unlike the sync: false ones above) is applied
+      # automatically on the next blueprint sync, no dashboard step needed.
+      - key: CORS_ORIGINS
+        value: https://swasthyasetu.vercel.app,https://swasthyasetu-admin.vercel.app
