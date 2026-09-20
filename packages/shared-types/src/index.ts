@@ -72,7 +72,12 @@ export type AuditAction =
   | 'grant_consent'
   | 'revoke_consent'
   | 'generate_summary'
-  | 'approve_summary';
+  | 'approve_summary'
+  | 'create_referral'
+  | 'accept_referral'
+  | 'complete_referral'
+  | 'reassign_referral'
+  | 'cancel_referral';
 
 export interface AuditEvent {
   id: string;

@@ -12,7 +12,17 @@ import { useLanguage } from '@/lib/i18n';
 
 const ACTION_LABEL_KEYS: Record<
   AuditAction,
-  'audit_viewPatient' | 'audit_createEncounter' | 'audit_grantConsent' | 'audit_revokeConsent' | 'audit_generateSummary' | 'audit_approveSummary'
+  | 'audit_viewPatient'
+  | 'audit_createEncounter'
+  | 'audit_grantConsent'
+  | 'audit_revokeConsent'
+  | 'audit_generateSummary'
+  | 'audit_approveSummary'
+  | 'audit_createReferral'
+  | 'audit_acceptReferral'
+  | 'audit_completeReferral'
+  | 'audit_reassignReferral'
+  | 'audit_cancelReferral'
 > = {
   view_patient: 'audit_viewPatient',
   create_encounter: 'audit_createEncounter',
@@ -20,6 +30,11 @@ const ACTION_LABEL_KEYS: Record<
   revoke_consent: 'audit_revokeConsent',
   generate_summary: 'audit_generateSummary',
   approve_summary: 'audit_approveSummary',
+  create_referral: 'audit_createReferral',
+  accept_referral: 'audit_acceptReferral',
+  complete_referral: 'audit_completeReferral',
+  reassign_referral: 'audit_reassignReferral',
+  cancel_referral: 'audit_cancelReferral',
 };
 
 export default function MyAuditScreen() {

@@ -8,6 +8,7 @@ import { loadReferral, requireReferralAccess } from '../referrals/middleware';
 import { loadConsultation } from '../consultations/middleware';
 import { CONSULTATION_SELECT, toConsultation, type ConsultationRow } from '../consultations/repository';
 import { broadcastConsultationChanged } from '../realtime/socket';
+import { recordAudit } from '../patients/audit';
 
 export const consultationsRouter = Router();
 
@@ -153,12 +154,28 @@ consultationsRouter.patch('/consultations/:id/end', verifyAuth, loadConsultation
   // Attributed to the receiving facility regardless of which side actually
   // pressed "end" (a patient ending the call has no facility of their own).
   const minutes = Math.round(durationSeconds / 60);
-  await supabase.from('encounters').insert({
-    patient_id: finished.patientId,
-    facility_id: req.consultationReferral!.receivingFacilityId,
-    recorded_by: req.user!.id,
-    notes: `Teleconsultation (${finished.mode}) completed. Duration: ${minutes} minute${minutes === 1 ? '' : 's'}.`,
-  });
+  const { data: encounter } = await supabase
+    .from('encounters')
+    .insert({
+      patient_id: finished.patientId,
+      facility_id: req.consultationReferral!.receivingFacilityId,
+      recorded_by: req.user!.id,
+      notes: `Teleconsultation (${finished.mode}) completed. Duration: ${minutes} minute${minutes === 1 ? '' : 's'}.`,
+    })
+    .select('id')
+    .maybeSingle();
+
+  // This encounter reached the patient's timeline without an audit event,
+  // unlike one recorded through the encounters route — same append, so it
+  // gets the same entry in the trail.
+  if (encounter) {
+    await recordAudit(supabase, {
+      patientId: finished.patientId,
+      actorId: req.user!.id,
+      action: 'create_encounter',
+      metadata: { encounterId: encounter.id, viaConsultationId: finished.id },
+    });
+  }
 
   broadcast(row, req.consultationReferral!);
   res.json(finished);

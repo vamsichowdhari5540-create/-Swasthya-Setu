@@ -9,6 +9,7 @@ import { loadReferral, requireReferralAccess } from '../referrals/middleware';
 import { canActOnEitherSide, canActOnReceivingSide } from '../referrals/access';
 import { REFERRAL_SELECT, toPatientUserId, toReferral, type ReferralRow } from '../referrals/repository';
 import { broadcastReferralChanged } from '../realtime/socket';
+import { recordAudit } from '../patients/audit';
 import { getIdempotencyKey, insertIdempotent } from '../idempotency';
 
 export const referralsRouter = Router();
@@ -56,8 +57,15 @@ referralsRouter.post(
 
     const referral = toReferral(data);
     // A replayed create shouldn't re-notify everyone as if this were a
-    // second, brand-new referral landing in their queue.
+    // second, brand-new referral landing in their queue, or log a second
+    // audit event for one thing that happened once.
     if (!replayed) {
+      await recordAudit(supabase, {
+        patientId: referral.patientId,
+        actorId: req.user!.id,
+        action: 'create_referral',
+        metadata: { referralId: referral.id, receivingFacilityId: referral.receivingFacilityId },
+      });
       broadcastReferralChanged(referral, toPatientUserId(data));
     }
     res.status(replayed ? 200 : 201).json(referral);
@@ -151,6 +159,12 @@ referralsRouter.patch(
 
     const row = data as unknown as ReferralRow;
     const referral = toReferral(row);
+    await recordAudit(supabase, {
+      patientId: referral.patientId,
+      actorId: req.user!.id,
+      action: 'accept_referral',
+      metadata: { referralId: referral.id },
+    });
     broadcastReferralChanged(referral, toPatientUserId(row));
     res.json(referral);
   }
@@ -203,14 +217,37 @@ referralsRouter.patch(
     // data flow is explicit that this is what "sees updated status +
     // timeline" means. It's an ordinary append-only encounter, same as any
     // other recorded visit.
-    await supabase.from('encounters').insert({
-      patient_id: referral.patientId,
-      facility_id: referral.receivingFacilityId,
-      recorded_by: req.user!.id,
-      notes: `Referral completed: ${referral.reason}.${
-        referral.completionNotes ? ` ${referral.completionNotes}` : ''
-      }`,
+    const { data: encounter } = await supabase
+      .from('encounters')
+      .insert({
+        patient_id: referral.patientId,
+        facility_id: referral.receivingFacilityId,
+        recorded_by: req.user!.id,
+        notes: `Referral completed: ${referral.reason}.${
+          referral.completionNotes ? ` ${referral.completionNotes}` : ''
+        }`,
+      })
+      .select('id')
+      .maybeSingle();
+
+    // Two things happened here and the trail should show both: the
+    // referral closed, and a visit was appended to the patient's record.
+    // The encounter written above reached the timeline without an audit
+    // event, unlike one recorded through the encounters route.
+    await recordAudit(supabase, {
+      patientId: referral.patientId,
+      actorId: req.user!.id,
+      action: 'complete_referral',
+      metadata: { referralId: referral.id },
     });
+    if (encounter) {
+      await recordAudit(supabase, {
+        patientId: referral.patientId,
+        actorId: req.user!.id,
+        action: 'create_encounter',
+        metadata: { encounterId: encounter.id, viaReferralId: referral.id },
+      });
+    }
 
     broadcastReferralChanged(referral, toPatientUserId(row));
     res.json(referral);
@@ -259,6 +296,12 @@ referralsRouter.patch(
 
     const row = data as unknown as ReferralRow;
     const referral = toReferral(row);
+    await recordAudit(supabase, {
+      patientId: referral.patientId,
+      actorId: req.user!.id,
+      action: 'reassign_referral',
+      metadata: { referralId: referral.id, toFacilityId: facilityId },
+    });
     broadcastReferralChanged(referral, toPatientUserId(row));
     res.json(referral);
   }
@@ -300,6 +343,12 @@ referralsRouter.patch(
 
     const row = data as unknown as ReferralRow;
     const referral = toReferral(row);
+    await recordAudit(supabase, {
+      patientId: referral.patientId,
+      actorId: req.user!.id,
+      action: 'cancel_referral',
+      metadata: { referralId: referral.id },
+    });
     broadcastReferralChanged(referral, toPatientUserId(row));
     res.json(referral);
   }

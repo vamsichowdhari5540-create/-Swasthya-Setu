@@ -192,6 +192,11 @@ const STRINGS = {
   audit_revokeConsent: { en: 'Consent revoked', hi: 'सहमति रद्द की गई', te: 'సమ్మతి రద్దు చేయబడింది' },
   audit_generateSummary: { en: 'AI summary generated', hi: 'एआई सारांश बनाया गया', te: 'AI సారాంశం రూపొందించబడింది' },
   audit_approveSummary: { en: 'AI summary approved', hi: 'एआई सारांश स्वीकृत', te: 'AI సారాంశం ఆమోదించబడింది' },
+  audit_createReferral: { en: 'Referral created', hi: 'रेफरल बनाया गया', te: 'రిఫరల్ సృష్టించబడింది' },
+  audit_acceptReferral: { en: 'Referral accepted', hi: 'रेफरल स्वीकार किया गया', te: 'రిఫరల్ ఆమోదించబడింది' },
+  audit_completeReferral: { en: 'Referral completed', hi: 'रेफरल पूरा हुआ', te: 'రిఫరల్ పూర్తయింది' },
+  audit_reassignReferral: { en: 'Referral reassigned', hi: 'रेफरल पुनः असाइन किया गया', te: 'రిఫరల్ తిరిగి కేటాయించబడింది' },
+  audit_cancelReferral: { en: 'Referral cancelled', hi: 'रेफरल रद्द किया गया', te: 'రిఫరల్ రద్దు చేయబడింది' },
   audit_empty: { en: 'No recorded access yet.', hi: 'अभी तक कोई पहुंच दर्ज नहीं है।', te: 'ఇంకా యాక్సెస్ నమోదు కాలేదు.' },
 
   healthid_hint: {

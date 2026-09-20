@@ -247,3 +247,42 @@ alter table audit_events add constraint audit_events_action_check
     'view_patient', 'create_encounter', 'grant_consent', 'revoke_consent',
     'generate_summary', 'approve_summary'
   ));
+
+-- Post-demo hardening: the referral lifecycle moves a patient's care
+-- between facilities, which is exactly the kind of access the audit trail
+-- exists to record, but none of its five transitions were writing to it.
+alter table audit_events drop constraint if exists audit_events_action_check;
+alter table audit_events add constraint audit_events_action_check
+  check (action in (
+    'view_patient', 'create_encounter', 'grant_consent', 'revoke_consent',
+    'generate_summary', 'approve_summary',
+    'create_referral', 'accept_referral', 'complete_referral',
+    'reassign_referral', 'cancel_referral'
+  ));
+
+-- Postgres indexes primary keys and unique constraints automatically but
+-- never foreign keys, so every lookup below was a sequential scan. Listed
+-- against the query that needs each one; they matter more as the demo
+-- database grows than they did when it held a dozen rows.
+--
+-- canAccessPatient (patients/access.ts) — runs on every cross-facility
+-- record access, so this is the hottest of the set.
+create index if not exists consents_patient_facility_idx
+  on consents (patient_id, facility_id);
+-- Patient timeline and AI summary generation.
+create index if not exists encounters_patient_id_idx on encounters (patient_id);
+-- A patient's own referral list.
+create index if not exists referrals_patient_id_idx on referrals (patient_id);
+-- The "incoming" and "outgoing" facility queues (routes/referrals.ts).
+create index if not exists referrals_receiving_facility_idx
+  on referrals (receiving_facility_id);
+create index if not exists referrals_originating_facility_idx
+  on referrals (originating_facility_id);
+-- Resolving a call from its parent referral.
+create index if not exists consultations_referral_id_idx on consultations (referral_id);
+-- A patient's "who accessed my record" view.
+create index if not exists audit_events_patient_id_idx on audit_events (patient_id);
+-- The district dashboard's recent-activity feed, which reads the newest
+-- 200 events on every load.
+create index if not exists audit_events_created_at_idx
+  on audit_events (created_at desc);
