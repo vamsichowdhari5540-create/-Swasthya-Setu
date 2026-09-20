@@ -9,6 +9,10 @@ import { validateSummaryResult, type SummaryResult } from './schema';
 // the response's own `modelVersion` field reports back for us to record.
 const GEMINI_MODEL_ALIAS = 'gemini-flash-lite-latest';
 
+// See the matching constant in groqClient: an adapter that hangs defeats
+// the point of having a fallback chain behind it.
+const REQUEST_TIMEOUT_MS = 10_000;
+
 interface GeminiResponse {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
   modelVersion?: string;
@@ -33,6 +37,7 @@ async function callGeminiOnce(patientName: string, templateSummary: string): Pro
           contents: [{ role: 'user', parts: [{ text: buildSummaryPrompt(patientName, templateSummary) }] }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
         }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       }
     );
     if (!response.ok) {

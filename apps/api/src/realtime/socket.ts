@@ -75,7 +75,13 @@ export function initRealtime(httpServer: HttpServer): IOServer {
     // it only forwards it to whoever else is in the room.
     socket.on(CONSULTATION_SIGNAL_EVENT, (payload: { consultationId: string; signal: ConsultationSignal }) => {
       if (!payload?.consultationId) return;
-      socket.to(`consultation:${payload.consultationId}`).emit(CONSULTATION_SIGNAL_EVENT, payload.signal);
+      const room = `consultation:${payload.consultationId}`;
+      // Membership is the authorization: the join handler above is what
+      // vets it. Relaying on the payload's room id alone would let any
+      // authenticated socket inject SDP/ICE into a call it never joined,
+      // just by naming the consultation id.
+      if (!socket.rooms.has(room)) return;
+      socket.to(room).emit(CONSULTATION_SIGNAL_EVENT, payload.signal);
     });
   });
 

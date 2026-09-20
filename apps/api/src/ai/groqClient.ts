@@ -9,6 +9,12 @@ import { validateSummaryResult, type SummaryResult } from './schema';
 // find the current replacement.
 const GROQ_MODEL = 'openai/gpt-oss-20b';
 
+// Without this, a hung connection rides Node's ~300s default, doubled by
+// withRetry and again by the Gemini leg — a summary request could sit for
+// minutes before falling back to the template. The chain is only useful if
+// each leg gives up fast enough for the next one to still matter.
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function callGroqOnce(patientName: string, templateSummary: string): Promise<SummaryResult | null> {
   if (!env.groqApiKey) return null;
 
@@ -25,6 +31,7 @@ async function callGroqOnce(patientName: string, templateSummary: string): Promi
         response_format: { type: 'json_object' },
         temperature: 0.2,
       }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) {
       console.warn(`Groq call failed: ${response.status} ${await response.text().catch(() => '')}`);

@@ -62,9 +62,16 @@ patientsRouter.post('/patients', verifyAuth, requireRole('anm_asha', 'doctor'), 
 patientsRouter.get('/patients/search', verifyAuth, requireRole('anm_asha', 'doctor'), async (req, res) => {
   const supabase = getSupabase()!;
   // Strip characters that are syntactically meaningful in PostgREST's
-  // .or() filter grammar (`,()`) so the query can't be reshaped by input.
-  const q = String(req.query.q ?? '').trim().replace(/[,()]/g, '');
-  if (!q) {
+  // .or() filter grammar (`,()`) so the query can't be reshaped by input,
+  // and the LIKE wildcards (`%_`) so a query can't widen its own match —
+  // `?q=%` would otherwise walk the whole patient directory 20 rows at a
+  // time. A directory lookup has to be a lookup, not an enumeration.
+  const q = String(req.query.q ?? '')
+    .trim()
+    .replace(/[,()%_]/g, '');
+  // Two characters is the shortest that still narrows anything; a
+  // single letter is a directory dump by another name.
+  if (q.length < 2) {
     res.json([]);
     return;
   }
