@@ -70,14 +70,6 @@ export default function LoginScreen() {
       <Link href="/consent" style={styles.link}>
         <Text style={[styles.linkText, { color: colors.tint }]}>{t('login_dataAccess')}</Text>
       </Link>
-
-      <View style={[styles.demoBox, { borderColor: colors.border }]}>
-        <Text style={[styles.demoLabel, { color: colors.muted }]}>{t('login_demoAccounts')}</Text>
-        <Text style={[styles.demoLine, { color: colors.muted }]}>patient@demo.swasthyasetu.app</Text>
-        <Text style={[styles.demoLine, { color: colors.muted }]}>anm@demo.swasthyasetu.app</Text>
-        <Text style={[styles.demoLine, { color: colors.muted }]}>doctor@demo.swasthyasetu.app</Text>
-        <Text style={[styles.demoLine, { color: colors.muted }]}>admin@demo.swasthyasetu.app</Text>
-      </View>
     </View>
   );
 }
@@ -130,20 +122,5 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontWeight: '600',
-  },
-  demoBox: {
-    marginTop: 40,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-  },
-  demoLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  demoLine: {
-    fontSize: 12,
-    fontFamily: 'SpaceMono',
   },
 });

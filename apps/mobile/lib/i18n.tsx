@@ -47,11 +47,6 @@ const STRINGS = {
     hi: 'यह ऐप कौन सा डेटा एक्सेस करता है?',
     te: 'ఈ యాప్ ఏ డేటాను యాక్సెస్ చేస్తుంది?',
   },
-  login_demoAccounts: {
-    en: 'Demo accounts (password: Demo@1234)',
-    hi: 'डेमो खाते (पासवर्ड: Demo@1234)',
-    te: 'డెమో ఖాతాలు (పాస్‌వర్డ్: Demo@1234)',
-  },
   login_createAccount: { en: 'Create an account', hi: 'खाता बनाएं', te: 'ఖాతా సృష్టించండి' },
   login_forgotPassword: { en: 'Forgot password?', hi: 'पासवर्ड भूल गए?', te: 'పాస్‌వర్డ్ మర్చిపోయారా?' },
 

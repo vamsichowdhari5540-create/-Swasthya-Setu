@@ -51,7 +51,6 @@ export function Login({
           No account yet? District Admin accounts are created from the mobile app's sign-up screen — the same
           Supabase project backs both.
         </p>
-        <p className="muted small">Demo: admin@demo.swasthyasetu.app / Demo@1234</p>
       </form>
     </div>
   );
