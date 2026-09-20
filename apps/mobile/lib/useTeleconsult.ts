@@ -12,11 +12,20 @@ export type CallState =
   | 'ended'
   | 'error';
 
-// Public STUN only, no TURN — per the Phase 6 guardrail, this prototype is
-// meant to work on LAN/direct paths, not through every kind of NAT. A
-// symmetric-NAT pairing simply won't connect without TURN infrastructure,
-// which is a deliberate, documented limitation of the free-cost plan.
-const ICE_SERVERS = [{ urls: 'stun:stun.l.google.com:19302' }];
+// STUN alone only resolves direct/LAN-reachable pairs; most real mobile
+// carrier NATs are symmetric and need a TURN relay to connect at all. A
+// free-tier TURN URL/credentials can be supplied via EXPO_PUBLIC_TURN_*
+// (e.g. Metered, Twilio NTS) — falls back to the openrelay.metered.ca demo
+// relay (public, rate-limited, fine for a pilot, not for production scale)
+// so calls still work off-LAN even before those env vars are set.
+const ICE_SERVERS = [
+  { urls: 'stun:stun.l.google.com:19302' },
+  {
+    urls: process.env.EXPO_PUBLIC_TURN_URL ?? 'turn:openrelay.metered.ca:80',
+    username: process.env.EXPO_PUBLIC_TURN_USERNAME ?? 'openrelayproject',
+    credential: process.env.EXPO_PUBLIC_TURN_CREDENTIAL ?? 'openrelayproject',
+  },
+];
 
 interface UseTeleconsultOptions {
   accessToken: string | undefined;
