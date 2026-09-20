@@ -399,10 +399,10 @@ serverless:
 | Part | URL |
 | --- | --- |
 | API | `https://swasthya-setu-api-zx9d.onrender.com` |
-| Mobile web | `https://swasthyasetu.vercel.app` |
-| Admin console | `https://swasthyasetu-admin.vercel.app` |
+| Mobile web | `https://swasthya-sethu.vercel.app` |
+| Admin console | Not deployed yet — verify the real URL the same way once it is |
 
-Render assigns the API's hostname itself (not the plain `swasthya-setu-api.onrender.com` the service name would suggest) — use the URL above, not a guessed one, when setting `EXPO_PUBLIC_API_URL`, `VITE_API_URL`, or `CORS_ORIGINS`.
+Both Render and Vercel assign the actual hostname from internal naming (the repo name, in Vercel's case — not whatever's typed into a form), not from what you'd expect. Two guesses already turned out wrong here: `swasthya-setu-api.onrender.com` (the real one has a random suffix) and `swasthyasetu.vercel.app` (the real one keeps the repo's hyphen). Use the confirmed URLs above, not a guessed one, when setting `EXPO_PUBLIC_API_URL`, `VITE_API_URL`, or `CORS_ORIGINS` — and confirm the admin console's URL the same way (curl it, check the page title) before trusting it anywhere.
 
 All three build from the **repo root**, not from inside `apps/*` — npm
 workspaces hoists dependencies and symlinks `@swasthya-setu/shared-types`
