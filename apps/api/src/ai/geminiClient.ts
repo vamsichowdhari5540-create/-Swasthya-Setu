@@ -26,7 +26,7 @@ interface GeminiCallResult {
   model: string;
 }
 
-async function callGeminiOnce(patientName: string, templateSummary: string): Promise<GeminiCallResult | null> {
+async function callGeminiOnce(templateSummary: string): Promise<GeminiCallResult | null> {
   try {
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL_ALIAS}:generateContent?key=${env.geminiApiKey}`,
@@ -34,7 +34,7 @@ async function callGeminiOnce(patientName: string, templateSummary: string): Pro
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: buildSummaryPrompt(patientName, templateSummary) }] }],
+          contents: [{ role: 'user', parts: [{ text: buildSummaryPrompt(templateSummary) }] }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
         }),
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -66,9 +66,8 @@ async function callGeminiOnce(patientName: string, templateSummary: string): Pro
 // (Render has no local model to reach, but it can always reach Google's
 // API) — same never-throws contract as every other adapter in the chain.
 export async function requestGeminiSummary(
-  patientName: string,
   templateSummary: string
 ): Promise<GeminiCallResult | null> {
   if (!env.geminiApiKey) return null;
-  return withRetry(() => callGeminiOnce(patientName, templateSummary));
+  return withRetry(() => callGeminiOnce(templateSummary));
 }

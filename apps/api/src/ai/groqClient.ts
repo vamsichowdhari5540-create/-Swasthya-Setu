@@ -15,7 +15,7 @@ const GROQ_MODEL = 'openai/gpt-oss-20b';
 // each leg gives up fast enough for the next one to still matter.
 const REQUEST_TIMEOUT_MS = 10_000;
 
-async function callGroqOnce(patientName: string, templateSummary: string): Promise<SummaryResult | null> {
+async function callGroqOnce(templateSummary: string): Promise<SummaryResult | null> {
   if (!env.groqApiKey) return null;
 
   try {
@@ -27,7 +27,7 @@ async function callGroqOnce(patientName: string, templateSummary: string): Promi
       },
       body: JSON.stringify({
         model: GROQ_MODEL,
-        messages: [{ role: 'user', content: buildSummaryPrompt(patientName, templateSummary) }],
+        messages: [{ role: 'user', content: buildSummaryPrompt(templateSummary) }],
         response_format: { type: 'json_object' },
         temperature: 0.2,
       }),
@@ -60,10 +60,9 @@ async function callGroqOnce(patientName: string, templateSummary: string): Promi
 // orchestrator (ai/generate.ts) moves on to the next adapter in the chain —
 // per the guardrail, a model outage must never block getting a summary.
 export async function requestGroqSummary(
-  patientName: string,
   templateSummary: string
 ): Promise<{ result: SummaryResult; model: string } | null> {
   if (!env.groqApiKey) return null;
-  const result = await withRetry(() => callGroqOnce(patientName, templateSummary));
+  const result = await withRetry(() => callGroqOnce(templateSummary));
   return result ? { result, model: GROQ_MODEL } : null;
 }

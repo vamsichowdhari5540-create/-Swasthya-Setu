@@ -8,7 +8,7 @@ import { loadSummary } from '../summaries/middleware';
 import { recordAudit } from '../patients/audit';
 import { getIdempotencyKey, insertIdempotent } from '../idempotency';
 import { SUMMARY_SELECT, toSummary, type SummaryRow } from '../summaries/repository';
-import { buildTemplateSummary } from '../ai/template';
+import { buildTemplateSummary, DEIDENTIFIED_SUBJECT } from '../ai/template';
 import { generateSummary } from '../ai/generate';
 
 export const summariesRouter = Router();
@@ -19,7 +19,13 @@ interface EncounterNarrativeRow {
   facilities: { name: string }[] | { name: string } | null;
 }
 
-async function loadTimelineNarrative(patientId: string, patientName: string): Promise<string> {
+// Two renderings of the same timeline: `named` is what a clinician reads
+// and what gets saved when no model produces a narrative; `deidentified`
+// is the only one that leaves this backend for Groq or Gemini.
+async function loadTimelineNarrative(
+  patientId: string,
+  patientName: string
+): Promise<{ named: string; deidentified: string }> {
   const supabase = getSupabase()!;
   const { data } = await supabase
     .from('encounters')
@@ -37,7 +43,10 @@ async function loadTimelineNarrative(patientId: string, patientName: string): Pr
     };
   });
 
-  return buildTemplateSummary({ fullName: patientName }, encounters);
+  return {
+    named: buildTemplateSummary(patientName, encounters),
+    deidentified: buildTemplateSummary(DEIDENTIFIED_SUBJECT, encounters),
+  };
 }
 
 // Any staff with access to the patient can ask for a draft; per the exit
@@ -51,8 +60,8 @@ summariesRouter.post(
   async (req, res) => {
     const supabase = getSupabase()!;
     const patient = req.patient!;
-    const templateSummary = await loadTimelineNarrative(patient.id, patient.fullName);
-    const generated = await generateSummary(patient.fullName, templateSummary);
+    const timeline = await loadTimelineNarrative(patient.id, patient.fullName);
+    const generated = await generateSummary(timeline.deidentified);
 
     const values: Record<string, unknown> = {
       patient_id: patient.id,
@@ -61,7 +70,7 @@ summariesRouter.post(
       source: generated.source,
       model: generated.model,
       model_version: generated.modelVersion,
-      draft_text: generated.draftText,
+      draft_text: generated.draftText ?? timeline.named,
       triage_level: generated.triageLevel,
       triage_rationale: generated.triageRationale,
     };

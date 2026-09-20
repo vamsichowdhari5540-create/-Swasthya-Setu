@@ -10,7 +10,10 @@ export interface GeneratedSummary {
   source: 'groq' | 'gemini' | 'template';
   model: string | null;
   modelVersion: string;
-  draftText: string;
+  // Null when no model produced a narrative. The caller substitutes its
+  // own template text, which is the only copy that carries the patient's
+  // name — nothing in this module ever holds an identifier.
+  draftText: string | null;
   triageLevel: SummaryResult['triageLevel'] | null;
   triageRationale: string | null;
 }
@@ -25,8 +28,10 @@ export interface GeneratedSummary {
 // adapter shares the same JSON Schema (ai/schema.ts), so whichever one
 // succeeds produces the same validated shape; the caller never needs to
 // know which one it was.
-export async function generateSummary(patientName: string, templateSummary: string): Promise<GeneratedSummary> {
-  const groq = await requestGroqSummary(patientName, templateSummary);
+// Takes the de-identified timeline only — there is deliberately no
+// parameter here to pass a patient's name through to a model.
+export async function generateSummary(templateSummary: string): Promise<GeneratedSummary> {
+  const groq = await requestGroqSummary(templateSummary);
   if (groq) {
     return {
       source: 'groq',
@@ -38,7 +43,7 @@ export async function generateSummary(patientName: string, templateSummary: stri
     };
   }
 
-  const gemini = await requestGeminiSummary(patientName, templateSummary);
+  const gemini = await requestGeminiSummary(templateSummary);
   if (gemini) {
     return {
       source: 'gemini',
@@ -54,7 +59,7 @@ export async function generateSummary(patientName: string, templateSummary: stri
     source: 'template',
     model: null,
     modelVersion: TEMPLATE_VERSION,
-    draftText: templateSummary,
+    draftText: null,
     triageLevel: null,
     triageRationale: null,
   };
