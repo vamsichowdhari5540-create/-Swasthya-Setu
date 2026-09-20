@@ -32,8 +32,4 @@ services:
       # A committed `value` (unlike the sync: false ones above) is applied
       # automatically on the next blueprint sync, no dashboard step needed.
       - key: CORS_ORIGINS
-        # http://localhost:8081 added temporarily to test teleconsultation
-        # against a local Expo web build before the mobile app is actually
-        # deployed to Vercel — remove once that deployment exists and this
-        # kind of testing moves to the real staging URL instead.
-        value: https://swasthyasetu.vercel.app,https://swasthyasetu-admin.vercel.app,http://localhost:8081
+        value: https://swasthyasetu.vercel.app,https://swasthyasetu-admin.vercel.app
