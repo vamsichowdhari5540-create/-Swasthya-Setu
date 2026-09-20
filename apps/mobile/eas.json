@@ -10,9 +10,9 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-DEPLOYED-API-URL",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "",
+        "EXPO_PUBLIC_API_URL": "https://swasthya-setu-api-zx9d.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://isqlepxztktpeeukxtvu.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_qfWGN-JVqu2SZ2fWsUQeUQ_21qCmBmR",
         "EXPO_PUBLIC_TURN_URL": "",
         "EXPO_PUBLIC_TURN_USERNAME": "",
         "EXPO_PUBLIC_TURN_CREDENTIAL": ""
@@ -24,9 +24,9 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://REPLACE-WITH-DEPLOYED-API-URL",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "",
+        "EXPO_PUBLIC_API_URL": "https://swasthya-setu-api-zx9d.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://isqlepxztktpeeukxtvu.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_qfWGN-JVqu2SZ2fWsUQeUQ_21qCmBmR",
         "EXPO_PUBLIC_TURN_URL": "",
         "EXPO_PUBLIC_TURN_USERNAME": "",
         "EXPO_PUBLIC_TURN_CREDENTIAL": ""

@@ -394,6 +394,16 @@ serverless:
 | Expo web export (mobile) | Vercel (`vercel.json`) | Pure static SPA output (`web.output: "single"`), which is what Vercel serves best. |
 | Admin console (`apps/admin`) | A second Vercel project | Also a static build (Vite), per Phase 9's free stack — but a separate Vercel project from the mobile one, since they build from different commands/output directories. |
 
+**Live URLs:**
+
+| Part | URL |
+| --- | --- |
+| API | `https://swasthya-setu-api-zx9d.onrender.com` |
+| Mobile web | `https://swasthyasetu.vercel.app` |
+| Admin console | `https://swasthyasetu-admin.vercel.app` |
+
+Render assigns the API's hostname itself (not the plain `swasthya-setu-api.onrender.com` the service name would suggest) — use the URL above, not a guessed one, when setting `EXPO_PUBLIC_API_URL`, `VITE_API_URL`, or `CORS_ORIGINS`.
+
 All three build from the **repo root**, not from inside `apps/*` — npm
 workspaces hoists dependencies and symlinks `@swasthya-setu/shared-types`
 into the root `node_modules`, so installing from a subdirectory wouldn't
@@ -406,9 +416,11 @@ Render injects its own `PORT`, which `apps/api/src/env.ts` already respects.
 
 **Vercel — mobile web**: point it at this repo, it reads `vercel.json`. Set
 the three `EXPO_PUBLIC_*` variables in the Vercel dashboard —
-`EXPO_PUBLIC_API_URL` must be the deployed Render URL (e.g.
-`https://swasthya-setu-api.onrender.com`), since these are inlined into the
-bundle at build time, not read at runtime. The `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+`EXPO_PUBLIC_API_URL` must be the deployed Render URL
+(`https://swasthya-setu-api-zx9d.onrender.com`, see the live URLs table
+above — Render assigns this hostname, it isn't derived from the service
+name), since these are inlined into the bundle at build time, not read at
+runtime. The `EXPO_PUBLIC_SUPABASE_ANON_KEY`
 is a publishable key and safe in a client bundle; the service role key is not
 and never leaves the backend.
 
