@@ -400,9 +400,11 @@ serverless:
 | --- | --- |
 | API | `https://swasthya-setu-api-zx9d.onrender.com` |
 | Mobile web | `https://swasthya-sethu.vercel.app` |
-| Admin console | Not deployed yet — verify the real URL the same way once it is |
+| Admin console | `https://swasthya-sethu-admin.vercel.app` |
 
-Both Render and Vercel assign the actual hostname from internal naming (the repo name, in Vercel's case — not whatever's typed into a form), not from what you'd expect. Two guesses already turned out wrong here: `swasthya-setu-api.onrender.com` (the real one has a random suffix) and `swasthyasetu.vercel.app` (the real one keeps the repo's hyphen). Use the confirmed URLs above, not a guessed one, when setting `EXPO_PUBLIC_API_URL`, `VITE_API_URL`, or `CORS_ORIGINS` — and confirm the admin console's URL the same way (curl it, check the page title) before trusting it anywhere.
+Both Render and Vercel assign the actual hostname from internal naming (the repo name, in Vercel's case — not whatever's typed into a form), not from what you'd expect. Three guesses already turned out wrong here: `swasthya-setu-api.onrender.com` (the real one has a random suffix), `swasthyasetu.vercel.app` and `swasthyasetu-admin.vercel.app` (the real ones keep the repo's hyphen: `swasthya-sethu`). Use the confirmed URLs above, not a guessed one, when setting `EXPO_PUBLIC_API_URL`, `VITE_API_URL`, or `CORS_ORIGINS`.
+
+**Admin console deploys as a separate Vercel project** (`swasthya-sethu-admin`) from the same repo, since it needs a different build command/output directory than the mobile app's `vercel.json` at the repo root. There's no clean per-project config file for this in one repo: `vercel deploy --local-config <file>` does not override the actual build command that runs server-side — it's silently ignored in favor of whatever's in the canonical `vercel.json`. The reliable way to redeploy the admin console via CLI is to temporarily swap the repo-root `vercel.json` for `vercel.admin.json`'s contents, run `vercel deploy --prod --yes --project swasthya-sethu-admin`, then restore the original `vercel.json` — exactly what shipped this deployment. `vercel.admin.json` is kept in the repo as the reference config for that swap, not as something Vercel reads directly.
 
 All three build from the **repo root**, not from inside `apps/*` — npm
 workspaces hoists dependencies and symlinks `@swasthya-setu/shared-types`

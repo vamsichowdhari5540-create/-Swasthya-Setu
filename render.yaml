@@ -32,10 +32,8 @@ services:
       # A committed `value` (unlike the sync: false ones above) is applied
       # automatically on the next blueprint sync, no dashboard step needed.
       - key: CORS_ORIGINS
-        # swasthya-sethu.vercel.app (with hyphen, matching the repo name)
-        # is the real deployed URL — Vercel assigns the project name from
-        # the repo, it isn't chosen freely, so this was wrong (as
-        # "swasthyasetu", no hyphen) until the actual deploy confirmed it.
-        # The admin console isn't deployed yet, so that origin is still a
-        # placeholder — verify it the same way once it exists.
-        value: https://swasthya-sethu.vercel.app,https://swasthyasetu-admin.vercel.app
+        # Both real deployed URLs, confirmed live (curl + browser login
+        # test), not guessed — the admin one was also initially guessed
+        # wrong as "swasthyasetu-admin" (no hyphen) before the real
+        # deploy confirmed the hyphen, same mistake as the mobile URL.
+        value: https://swasthya-sethu.vercel.app,https://swasthya-sethu-admin.vercel.app

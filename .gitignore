@@ -44,3 +44,5 @@ yarn-error.*
 
 # supabase local dev
 supabase/.temp/
+
+.vercel
