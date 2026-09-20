@@ -48,8 +48,8 @@ export function Login({
           Forgot password?
         </button>
         <p className="muted small">
-          No account yet? District Admin accounts are created from the mobile app's sign-up screen — the same
-          Supabase project backs both.
+          No account yet? District Admin accounts are provisioned directly by the system operator, not through
+          self-signup — contact them for access.
         </p>
       </form>
     </div>

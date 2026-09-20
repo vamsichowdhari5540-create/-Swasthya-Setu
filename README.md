@@ -104,11 +104,20 @@ someone actually enters, not seeded credentials. This is what lets several
 people demo the app from their own devices at once instead of everyone
 sharing `Demo@1234`.
 
-- **Every role is self-service**, including District Admin — there's no
-  invite code or approval step. That's a deliberate choice for a judged
-  demo (see the design discussion that led here), not something to carry
-  into a real deployment: anyone can currently self-declare as a doctor
-  or admin.
+- **Patient, ANM/ASHA, and Doctor are self-service** — there's no invite
+  code or approval step for these three. That's a deliberate choice for a
+  judged demo (see the design discussion that led here), not something to
+  carry into a real deployment: anyone can currently self-declare as a
+  doctor.
+- **District Admin is deliberately excluded from self-signup.** It's a
+  district-wide privileged role, so it isn't in the app's role picker and,
+  more importantly, isn't reachable even by calling the signup API
+  directly with a crafted payload — `handle_new_user` (below) only ever
+  assigns `anm_asha`/`doctor` from client-supplied data, everything else
+  becomes `patient`. A District Admin account can only be created by an
+  operator running SQL directly, e.g.
+  `update public.profiles set role = 'district_admin' where email = '...';`
+  after that person has signed up normally.
 - ANM/ASHA and Doctor signups pick a facility from a dropdown
   (`GET /api/facilities/public` — the one facilities route that doesn't
   require a session, since none exists yet at signup time).
@@ -116,7 +125,9 @@ sharing `Demo@1234`.
   (`handle_new_user` in `supabase/schema.sql`), not an API call — it reads
   `full_name`/`role`/`facility_id` out of `raw_user_meta_data` and inserts
   the matching `profiles` row in the same transaction as `auth.users`, so
-  there's never a signed-up account with no role.
+  there's never a signed-up account with no role. The role value is
+  whitelisted server-side, not merely trusted and range-checked, since
+  `raw_user_meta_data` is entirely client-controlled.
 - **A self-signed-up patient still isn't linked to a `patients` row** —
   same limitation as the demo patient accounts above. An ANM/ASHA has to
   register them and someone has to set `patients.user_id`, since there's

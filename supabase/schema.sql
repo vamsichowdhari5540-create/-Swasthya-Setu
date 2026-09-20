@@ -317,21 +317,30 @@ alter table audit_events add constraint audit_events_action_check
 -- that creates their auth.users row — there is no window where the user
 -- exists without a profile. full_name/role/facility_id come from the
 -- signUp() call's `options.data`, which Supabase copies verbatim into
--- raw_user_meta_data; nothing here re-validates that role is one of the
--- four legal values because the existing profiles_role_check constraint
--- already rejects the insert (and so the whole signup) if it isn't.
+-- raw_user_meta_data.
+--
+-- district_admin is deliberately NOT one of the roles a signup can request:
+-- it's a district-wide privileged role, and raw_user_meta_data is fully
+-- client-controlled (anyone can call the signup API directly with any
+-- payload, bypassing the app's own role picker). Whitelisting the
+-- self-service roles here — rather than trusting the client and relying on
+-- profiles_role_check to merely reject garbage — is the actual security
+-- boundary; a district_admin profile can only come from a direct DB write
+-- by an operator, never from this trigger.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
+declare
+  requested_role text := new.raw_user_meta_data->>'role';
 begin
   insert into public.profiles (id, email, full_name, role, facility_id)
   values (
     new.id,
     new.email,
     coalesce(nullif(trim(new.raw_user_meta_data->>'full_name'), ''), split_part(new.email, '@', 1)),
-    coalesce(new.raw_user_meta_data->>'role', 'patient'),
+    case when requested_role in ('anm_asha', 'doctor') then requested_role else 'patient' end,
     nullif(new.raw_user_meta_data->>'facility_id', '')::uuid
   );
   return new;

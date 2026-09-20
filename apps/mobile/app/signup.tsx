@@ -25,6 +25,13 @@ const ROLE_LABEL_KEYS: Record<
 // facility of its own, same rule the rest of the app already follows.
 const NEEDS_FACILITY: UserRole[] = ['anm_asha', 'doctor'];
 
+// District Admin is deliberately excluded from self-signup — it's a
+// district-wide privileged role, and letting anyone grant it to themselves
+// from a public form would be a privilege-escalation hole. The
+// handle_new_user trigger enforces this server-side too (see schema.sql),
+// so this is a UX filter, not the actual security boundary.
+const SELF_SIGNUP_ROLES: UserRole[] = USER_ROLES.filter((role) => role !== 'district_admin');
+
 export default function SignUpScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme];
@@ -123,7 +130,7 @@ export default function SignUpScreen() {
 
       <Text style={styles.label}>{t('signup_role')}</Text>
       <View style={styles.chipsRow} lightColor="transparent" darkColor="transparent">
-        {USER_ROLES.map((option) => {
+        {SELF_SIGNUP_ROLES.map((option) => {
           const active = option === role;
           return (
             <Pressable
