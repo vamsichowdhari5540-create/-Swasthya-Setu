@@ -86,6 +86,16 @@ architecture doc's guardrail against paid SMS OTP / real accounts here.
 | Doctor | doctor2@demo.swasthyasetu.app | Ibrahimpatnam PHC — a second facility/doctor, for demoing a referral that crosses two facilities neither of which is the ANM's own (e.g. Vijayawada → Ibrahimpatnam). |
 | District Admin | admin@demo.swasthyasetu.app | |
 
+**A publicly reachable deployment must not keep this password on the
+District Admin account.** `Demo@1234` here documents what a fresh
+`npm run seed:users` produces for local development — safe on a machine
+nobody else can reach. The moment a `district_admin` account with this
+password sits behind a public admin console URL, anyone who reads this
+file can sign in with elevated access. Rotate it (`supabase.auth.admin.
+updateUserById`, or the Supabase dashboard) on any deployment reachable
+from outside your own machine, independently of the `ALLOW_DEMO_RESET`
+guard on the reset endpoint (see *Test-data reset & demo-mode controls*).
+
 These seeded patient logins are linked to their `patients` row via
 `user_id`, set directly in the database — see
 `apps/api/scripts/seedUsers.ts` for account creation and the patient record
@@ -448,7 +458,11 @@ order — facilities and login accounts are untouched, since those are the
 environment, not test data. Guarded twice: a typed confirmation phrase in
 the UI (the button stays disabled without it) *and* the same phrase
 required server-side in the request body, so a client bypass still can't
-trigger it blind. ✅
+trigger it blind. A third guard sits in front of both: `ALLOW_DEMO_RESET`
+(`apps/api/src/env.ts`) defaults to **off** — the route returns 403 unless
+it's explicitly set to `true` — so a deployment nobody has configured yet
+can't be reset by anyone who read the README's demo credentials, even
+before either confirmation phrase is checked. ✅
 
 (The mobile app's own `Dashboard` screen from the earlier demo pass still
 exists as a lightweight companion view against the same endpoint — useful

@@ -21,7 +21,18 @@ export async function insertIdempotent<T>(
   table: string,
   values: Record<string, unknown>,
   clientMutationId: string | null,
-  select: string
+  select: string,
+  // Which fields of `values` must match the stored row for a collision to
+  // count as a genuine replay, rather than a different request reusing (or
+  // guessing) someone else's key. Defaults to every field, which is
+  // correct when the whole insert is caller-supplied and deterministic
+  // (encounters, referrals). A caller whose insert includes generated,
+  // non-deterministic output — an AI summary's draft_text differs on every
+  // model call — must instead pass the subset that actually identifies
+  // "this is the same request": the field a real collision could forge
+  // still can't be spoofed, but a legitimate retry is no longer rejected
+  // just because the model wrote a different sentence the second time.
+  scopeKeys?: string[]
 ): Promise<{ data: T | null; error: string | null; replayed: boolean }> {
   const { data, error } = await supabase
     .from(table)
@@ -53,9 +64,10 @@ export async function insertIdempotent<T>(
     // the row it originally created, so this only ever rejects a
     // collision, never a real replay.
     const row = existing as unknown as Record<string, unknown>;
-    for (const [key, value] of Object.entries(values)) {
+    const keysToCompare = scopeKeys ?? Object.keys(values);
+    for (const key of keysToCompare) {
       if (key === 'client_mutation_id') continue;
-      if (row[key] !== value) {
+      if (row[key] !== values[key]) {
         return { data: null, error: 'This idempotency key was already used for a different request.', replayed: false };
       }
     }

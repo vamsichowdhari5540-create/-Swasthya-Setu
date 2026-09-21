@@ -77,7 +77,12 @@ summariesRouter.post(
       'ai_summaries',
       values,
       getIdempotencyKey(req),
-      SUMMARY_SELECT
+      SUMMARY_SELECT,
+      // patient_id/created_by is what makes a retry "the same request";
+      // draft_text/triage_* come from a fresh model call every attempt and
+      // will legitimately differ between the original call and a retry,
+      // so comparing them would reject a genuine replay as a collision.
+      ['patient_id', 'created_by']
     );
 
     if (error || !data) {

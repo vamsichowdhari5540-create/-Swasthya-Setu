@@ -23,6 +23,15 @@ import { initRealtime } from './realtime/socket';
 
 const app = express();
 
+// Render sits in front of this app as a reverse proxy, so every request
+// Express sees arrives from Render's IP, not the real client's — without
+// this, express-rate-limit keys every request behind that one proxy IP
+// into the same bucket (all judges, all demo devices, sharing one limit)
+// and newer versions throw ERR_ERL_UNEXPECTED_X_FORWARDED_FOR outright once
+// they notice X-Forwarded-For is present but untrusted. `1` trusts exactly
+// one hop (Render's own proxy), not an arbitrary chain a client could spoof.
+app.set('trust proxy', 1);
+
 // Undefined origins list means unrestricted — see env.ts. Once the real
 // frontend URLs are known this should always be set; until then this
 // keeps today's behavior rather than locking out a deployment nobody's

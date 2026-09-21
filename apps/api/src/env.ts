@@ -23,8 +23,12 @@ export const env = {
   // replaces — so a deployment that hasn't set it yet doesn't break, but
   // it should always be set once the real frontend URLs are known.
   corsOrigins: optional('CORS_ORIGINS')?.split(',').map((s) => s.trim()).filter(Boolean),
-  // Defaults to enabled so an existing demo deployment keeps working
-  // without any action — set to "false" once judging is over, since this
-  // endpoint deletes the append-only audit trail on request.
-  allowDemoReset: optional('ALLOW_DEMO_RESET') !== 'false',
+  // Defaults to disabled: this endpoint deletes the append-only audit
+  // trail along with every patient/referral/consent row, on request, from
+  // a route reachable by the district_admin credentials this repo's own
+  // README used to publish. An opt-in default means a deployment nobody
+  // has touched yet — including this one, until the value is set on
+  // Render — can't be reset by anyone who just read the public repo. Set
+  // ALLOW_DEMO_RESET=true only for the window a live demo actually needs it.
+  allowDemoReset: optional('ALLOW_DEMO_RESET') === 'true',
 };

@@ -191,7 +191,38 @@ patientsRouter.get('/patients/search', verifyAuth, requireRole('anm_asha', 'doct
     res.status(500).json({ error: error.message });
     return;
   }
-  res.json(data.map(toPatient));
+
+  // The query above finds candidates by name/ID alone — it has no idea yet
+  // whether this caller is allowed to see them. Without this, search was
+  // the one patient-touching action in the app that bypassed the facility/
+  // consent rule everything else enforces: a self-registered "doctor"
+  // could sweep name/DOB/sex/health-ID for any patient nationwide. Reusing
+  // canAccessPatient here (rather than a second copy of the rule) keeps it
+  // the single enforcement point the rest of the app already relies on;
+  // the candidate list from the query above is capped at 20, so this is at
+  // most 20 small indexed lookups, not an unbounded fan-out.
+  const candidates = data.map(toPatient);
+  const visible = [];
+  for (const candidate of candidates) {
+    if (await canAccessPatient(supabase, req.user!, candidate)) {
+      visible.push(candidate);
+    }
+  }
+
+  // Every patient actually disclosed to this searcher is a real access to
+  // their identity, same as a QR scan — logged the same way, so "who has
+  // looked me up" (My Audit Log) can't be walked around by using search
+  // instead of the scanner.
+  for (const patient of visible) {
+    await recordAudit(supabase, {
+      patientId: patient.id,
+      actorId: req.user!.id,
+      action: 'view_patient',
+      metadata: { via: 'search' },
+    });
+  }
+
+  res.json(visible);
 });
 
 // The QR scan resolution endpoint: the mobile app scans a code, extracts
