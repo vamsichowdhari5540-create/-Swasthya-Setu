@@ -40,6 +40,11 @@ const STRINGS = {
 
   login_subtitle: { en: 'Sign in to continue', hi: 'जारी रखने के लिए साइन इन करें', te: 'కొనసాగించడానికి సైన్ ఇన్ చేయండి' },
   login_email: { en: 'Email', hi: 'ईमेल', te: 'ఇమెయిల్' },
+  login_emailOrHealthId: {
+    en: 'Email or Health ID',
+    hi: 'ईमेल या हेल्थ आईडी',
+    te: 'ఇమెయిల్ లేదా హెల్త్ ID',
+  },
   login_password: { en: 'Password', hi: 'पासवर्ड', te: 'పాస్‌వర్డ్' },
   login_signIn: { en: 'Sign In', hi: 'साइन इन करें', te: 'సైన్ ఇన్ చేయండి' },
   login_dataAccess: {
@@ -189,6 +194,27 @@ const STRINGS = {
   patient_waitingSync: { en: 'Waiting to sync', hi: 'सिंक होने की प्रतीक्षा में', te: 'సింక్ కోసం వేచి ఉంది' },
   patient_failedSync: { en: 'Failed to sync', hi: 'सिंक विफल', te: 'సింక్ విఫలమైంది' },
 
+  account_title: { en: 'App login', hi: 'ऐप लॉगिन', te: 'యాప్ లాగిన్' },
+  account_hint: {
+    en: 'Create a login so this patient can see their own records. Leave the email blank if they do not have one — they will sign in with their Health ID.',
+    hi: 'लॉगिन बनाएं ताकि यह मरीज़ अपना रिकॉर्ड देख सके। अगर उनके पास ईमेल नहीं है तो खाली छोड़ें — वे अपनी हेल्थ आईडी से साइन इन करेंगे।',
+    te: 'ఈ రోగి తన సొంత రికార్డులను చూడటానికి లాగిన్ సృష్టించండి. వారికి ఇమెయిల్ లేకపోతే ఖాళీగా వదిలేయండి — వారు తమ హెల్త్ ID తో సైన్ ఇన్ చేస్తారు.',
+  },
+  account_emailOptional: { en: 'Email (optional)', hi: 'ईमेल (वैकल्पिक)', te: 'ఇమెయిల్ (ఐచ్ఛికం)' },
+  account_create: { en: 'Create app login', hi: 'ऐप लॉगिन बनाएं', te: 'యాప్ లాగిన్ సృష్టించండి' },
+  account_exists: {
+    en: 'This patient already has an app login.',
+    hi: 'इस मरीज़ के पास पहले से ऐप लॉगिन है।',
+    te: 'ఈ రోగికి ఇప్పటికే యాప్ లాగిన్ ఉంది.',
+  },
+  account_created: {
+    en: 'Login created. Write this down and give it to the patient — the password is shown only once.',
+    hi: 'लॉगिन बन गया। इसे लिखकर मरीज़ को दें — पासवर्ड केवल एक बार दिखेगा।',
+    te: 'లాగిన్ సృష్టించబడింది. దీన్ని రాసి రోగికి ఇవ్వండి — పాస్‌వర్డ్ ఒకసారి మాత్రమే కనిపిస్తుంది.',
+  },
+  account_loginId: { en: 'Sign in with', hi: 'इससे साइन इन करें', te: 'దీనితో సైన్ ఇన్ చేయండి' },
+  account_password: { en: 'Temporary password', hi: 'अस्थायी पासवर्ड', te: 'తాత్కాలిక పాస్‌వర్డ్' },
+
   accept: { en: 'Accept Referral', hi: 'रेफरल स्वीकार करें', te: 'రిఫరల్ ఆమోదించండి' },
   cancel: { en: 'Cancel Referral', hi: 'रेफरल रद्द करें', te: 'రిఫరల్ రద్దు చేయండి' },
   reassign: { en: 'Reassign', hi: 'पुनः असाइन करें', te: 'తిరిగి కేటాయించండి' },
@@ -262,6 +288,11 @@ const STRINGS = {
   audit_completeReferral: { en: 'Referral completed', hi: 'रेफरल पूरा हुआ', te: 'రిఫరల్ పూర్తయింది' },
   audit_reassignReferral: { en: 'Referral reassigned', hi: 'रेफरल पुनः असाइन किया गया', te: 'రిఫరల్ తిరిగి కేటాయించబడింది' },
   audit_cancelReferral: { en: 'Referral cancelled', hi: 'रेफरल रद्द किया गया', te: 'రిఫరల్ రద్దు చేయబడింది' },
+  audit_createPatientAccount: {
+    en: 'App login created',
+    hi: 'ऐप लॉगिन बनाया गया',
+    te: 'యాప్ లాగిన్ సృష్టించబడింది',
+  },
   audit_empty: { en: 'No recorded access yet.', hi: 'अभी तक कोई पहुंच दर्ज नहीं है।', te: 'ఇంకా యాక్సెస్ నమోదు కాలేదు.' },
 
   healthid_hint: {

@@ -24,6 +24,7 @@ const ACTION_LABEL_KEYS: Record<
   | 'audit_completeReferral'
   | 'audit_reassignReferral'
   | 'audit_cancelReferral'
+  | 'audit_createPatientAccount'
 > = {
   view_patient: 'audit_viewPatient',
   create_encounter: 'audit_createEncounter',
@@ -37,6 +38,7 @@ const ACTION_LABEL_KEYS: Record<
   complete_referral: 'audit_completeReferral',
   reassign_referral: 'audit_reassignReferral',
   cancel_referral: 'audit_cancelReferral',
+  create_patient_account: 'audit_createPatientAccount',
 };
 
 export default function MyAuditScreen() {

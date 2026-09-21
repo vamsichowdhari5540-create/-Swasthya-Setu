@@ -351,3 +351,16 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- A field worker provisioning a login for a patient they just registered
+-- is an action on that patient's record, so it belongs in the same
+-- append-only trail as every other access to it.
+alter table audit_events drop constraint if exists audit_events_action_check;
+alter table audit_events add constraint audit_events_action_check
+  check (action in (
+    'view_patient', 'create_encounter', 'grant_consent', 'revoke_consent',
+    'generate_summary', 'edit_summary', 'approve_summary',
+    'create_referral', 'accept_referral', 'complete_referral',
+    'reassign_referral', 'cancel_referral',
+    'create_patient_account'
+  ));

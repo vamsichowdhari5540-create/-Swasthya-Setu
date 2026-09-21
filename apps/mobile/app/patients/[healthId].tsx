@@ -2,7 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
-import type { Encounter, Patient } from '@swasthya-setu/shared-types';
+import type {
+  CreatePatientAccountRequest,
+  CreatePatientAccountResponse,
+  Encounter,
+  Patient,
+} from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
@@ -30,6 +35,10 @@ export default function PatientDetailScreen() {
   const [encounters, setEncounters] = useState<Encounter[] | null>(null);
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [accountEmail, setAccountEmail] = useState('');
+  const [creatingAccount, setCreatingAccount] = useState(false);
+  const [credentials, setCredentials] = useState<CreatePatientAccountResponse | null>(null);
+  const [accountError, setAccountError] = useState<string | null>(null);
 
   const loadEncounters = useCallback(
     async (patientId: string) => {
@@ -92,6 +101,25 @@ export default function PatientDetailScreen() {
     }
   };
 
+  const handleCreateAccount = async () => {
+    if (state.kind !== 'done') return;
+    setAccountError(null);
+    setCreatingAccount(true);
+    try {
+      const body: CreatePatientAccountRequest = accountEmail.trim() ? { email: accountEmail.trim() } : {};
+      const result = await apiFetch<CreatePatientAccountResponse>(
+        session,
+        `/api/patients/${state.patient.healthId}/account`,
+        { method: 'POST', body: JSON.stringify(body) }
+      );
+      setCredentials(result);
+    } catch (err) {
+      setAccountError(err instanceof ApiError ? err.message : 'Could not create the login.');
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
   const pendingEncounters =
     state.kind === 'done'
       ? outboxItems.filter(
@@ -139,6 +167,53 @@ export default function PatientDetailScreen() {
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Row label={t('patient_dob')} value={patient.dateOfBirth} colors={colors} />
         <Row label={t('patient_sex')} value={patient.sex} colors={colors} />
+      </View>
+
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={styles.cardLabel}>{t('account_title')}</Text>
+        {credentials ? (
+          <>
+            <Text style={[styles.hint, { color: colors.tint }]}>{t('account_created')}</Text>
+            <Text style={[styles.rowLabel, { color: colors.muted }]}>{t('account_loginId')}</Text>
+            <Text style={styles.credential} selectable>
+              {credentials.loginId}
+            </Text>
+            <Text style={[styles.rowLabel, { color: colors.muted, marginTop: 10 }]}>{t('account_password')}</Text>
+            <Text style={styles.credential} selectable>
+              {credentials.temporaryPassword}
+            </Text>
+          </>
+        ) : patient.userId ? (
+          <Text style={[styles.placeholder, { color: colors.muted }]}>{t('account_exists')}</Text>
+        ) : (
+          <>
+            <Text style={[styles.hint, { color: colors.muted }]}>{t('account_hint')}</Text>
+            <TextInput
+              style={[
+                styles.input,
+                styles.accountInput,
+                { borderColor: colors.border, color: colors.text, backgroundColor: colors.background },
+              ]}
+              placeholder={t('account_emailOptional')}
+              placeholderTextColor={colors.muted}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={accountEmail}
+              onChangeText={setAccountEmail}
+            />
+            {accountError && <Text style={styles.error}>{accountError}</Text>}
+            <Pressable
+              style={[styles.button, { backgroundColor: colors.tint }]}
+              disabled={creatingAccount}
+              onPress={handleCreateAccount}>
+              {creatingAccount ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>{t('account_create')}</Text>
+              )}
+            </Pressable>
+          </>
+        )}
       </View>
 
       <Link
@@ -321,6 +396,17 @@ const styles = StyleSheet.create({
   inputWithVoice: {
     flex: 1,
     marginBottom: 0,
+  },
+  accountInput: {
+    minHeight: 48,
+    textAlignVertical: 'center',
+    marginBottom: 12,
+  },
+  credential: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SpaceMono',
+    marginTop: 2,
   },
   error: {
     color: '#c0392b',

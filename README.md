@@ -86,10 +86,13 @@ architecture doc's guardrail against paid SMS OTP / real accounts here.
 | Doctor | doctor2@demo.swasthyasetu.app | Ibrahimpatnam PHC — a second facility/doctor, for demoing a referral that crosses two facilities neither of which is the ANM's own (e.g. Vijayawada → Ibrahimpatnam). |
 | District Admin | admin@demo.swasthyasetu.app | |
 
-A patient login is linked to its `patients` row via `user_id`, set directly
-in the database (there's no self-service "link my account" flow yet) — see
+These seeded patient logins are linked to their `patients` row via
+`user_id`, set directly in the database — see
 `apps/api/scripts/seedUsers.ts` for account creation and the patient record
-itself is created the normal way (an ANM/ASHA registers it). That link is
+itself is created the normal way (an ANM/ASHA registers it). Patients
+registered during a real session don't need this: a field worker issues
+their login from the app (see *Patient logins, issued by the field worker*
+below), which does the same link over the API. That link is
 per-patient-row, not per-account: `apps/admin`'s **Reset demo data** clears
 the `patients` table, so after a reset `patient@...`/`patient2@...` are
 logins with no linked record until a new patient is registered and
@@ -128,10 +131,48 @@ sharing `Demo@1234`.
   there's never a signed-up account with no role. The role value is
   whitelisted server-side, not merely trusted and range-checked, since
   `raw_user_meta_data` is entirely client-controlled.
-- **A self-signed-up patient still isn't linked to a `patients` row** —
-  same limitation as the demo patient accounts above. An ANM/ASHA has to
-  register them and someone has to set `patients.user_id`, since there's
-  still no self-service "this is my record" flow.
+- **A self-signed-up patient still isn't linked to a `patients` row.**
+  Signing up on your own creates a login, not a medical record; the record
+  is created when an ANM/ASHA registers you. The two are joined by the
+  field worker instead, in the flow below — a patient who signs up
+  independently still has to be matched up by hand.
+
+### Patient logins, issued by the field worker
+
+The gap the above leaves is the one that matters in the field: an ANM/ASHA
+registers someone in a village, and that person has a record they can't
+reach until an operator with database access joins it to a login. Doing
+that per registration doesn't scale, and the days in between are days the
+patient can't see their own care.
+
+So the field worker issues the login themselves, from the patient screen,
+while the patient is still in front of them:
+`POST /api/patients/:healthId/account` (`apps/api/src/routes/patients.ts`)
+creates the Supabase Auth user and sets `patients.user_id` in one request,
+then returns a one-time temporary password for the worker to hand over.
+
+- **No email is required or sent.** `email_confirm` is set, because the
+  field worker has just met this person — a confirmation round-trip would
+  only prove control of an inbox, which is neither the identity check that
+  matters nor something many rural patients have. A patient who gives no
+  email gets a login derived from the health ID already on their card
+  (`healthIdToLoginEmail` in `packages/shared-types`, on a reserved
+  unroutable domain), and signs in by typing that health ID — the login
+  screen translates it back.
+- **It can only be done once, by someone with access.** The route is
+  `anm_asha`/`doctor`-only, goes through the same `canAccessPatient` check
+  as reading the record, refuses a patient who already has a login, and
+  deletes the auth user it just made if the link write doesn't land — so a
+  failed attempt leaves nothing stranded and can simply be retried.
+- It's recorded as `create_patient_account` in the same append-only
+  `audit_events` trail as every other access, visible to the patient on
+  their own **My Audit Log** screen.
+
+The temporary password is shown once and is known to the field worker who
+read it out, so it's a handover credential, not a lasting secret. Letting
+the patient change it in-app (and letting a field worker re-issue one for
+a patient who forgets it, since a derived login has no inbox to recover
+from) is the obvious next piece and isn't built yet.
 - Password reset redirects to a web page (`/reset-password`, on whichever
   app's origin sent the email — mobile web or the admin console), never a
   native deep link: the email might be opened on a device that doesn't

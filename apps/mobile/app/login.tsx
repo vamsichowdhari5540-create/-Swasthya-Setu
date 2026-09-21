@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import { healthIdToLoginEmail, isHealthId } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
@@ -14,7 +15,7 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const { t } = useLanguage();
 
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -22,7 +23,15 @@ export default function LoginScreen() {
   const handleSignIn = async () => {
     setError(null);
     setSubmitting(true);
-    const { error: signInError } = await signIn(email.trim(), password);
+    // A patient whose login was provisioned by a field worker has no real
+    // email behind it, so the health ID on their card is what they know
+    // and what they type — translated here into the address the account
+    // was actually created under.
+    const trimmed = identifier.trim();
+    const { error: signInError } = await signIn(
+      isHealthId(trimmed) ? healthIdToLoginEmail(trimmed) : trimmed,
+      password
+    );
     setSubmitting(false);
     if (signInError) setError(signInError);
   };
@@ -34,12 +43,12 @@ export default function LoginScreen() {
 
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
-        placeholder={t('login_email')}
+        placeholder={t('login_emailOrHealthId')}
         placeholderTextColor={colors.muted}
         autoCapitalize="none"
         keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
+        value={identifier}
+        onChangeText={setIdentifier}
       />
       <TextInput
         style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card }]}
@@ -54,7 +63,7 @@ export default function LoginScreen() {
 
       <Pressable
         style={[styles.button, { backgroundColor: colors.tint, opacity: submitting ? 0.7 : 1 }]}
-        disabled={submitting || !email || !password}
+        disabled={submitting || !identifier || !password}
         onPress={handleSignIn}>
         {submitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>{t('login_signIn')}</Text>}
       </Pressable>

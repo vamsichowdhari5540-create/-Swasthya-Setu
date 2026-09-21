@@ -38,6 +38,37 @@ export interface CreatePatientRequest {
   sex: Sex;
 }
 
+// A patient registered in a village often has no email address, and
+// requiring one would exclude exactly the people this is built for. Their
+// login is derived from the health ID already printed on their card, and
+// they sign in by typing that. The domain is a reserved, unroutable TLD
+// (RFC 2606) so nothing is ever sent to it and it can't collide with a
+// real inbox someone else owns.
+export const PATIENT_LOGIN_DOMAIN = 'patients.swasthyasetu.invalid';
+
+export function healthIdToLoginEmail(healthId: string): string {
+  return `${healthId.trim().toLowerCase()}@${PATIENT_LOGIN_DOMAIN}`;
+}
+
+export function isHealthId(value: string): boolean {
+  return /^SS-[A-Z0-9]{10}$/i.test(value.trim());
+}
+
+// Turning a registered patient into an app user, done by the field worker
+// while the patient is still standing in front of them.
+export interface CreatePatientAccountRequest {
+  // Omitted when the patient has no email — the server derives one from
+  // their health ID instead.
+  email?: string;
+}
+
+export interface CreatePatientAccountResponse {
+  // What the patient types to sign in: their health ID when the login was
+  // derived, otherwise the email address they gave.
+  loginId: string;
+  temporaryPassword: string;
+}
+
 export interface Encounter {
   id: string;
   patientId: string;
@@ -79,7 +110,8 @@ export type AuditAction =
   | 'accept_referral'
   | 'complete_referral'
   | 'reassign_referral'
-  | 'cancel_referral';
+  | 'cancel_referral'
+  | 'create_patient_account';
 
 export interface AuditEvent {
   id: string;

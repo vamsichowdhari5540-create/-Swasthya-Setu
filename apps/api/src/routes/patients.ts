@@ -1,10 +1,16 @@
 import { Router } from 'express';
-import type { CreatePatientRequest } from '@swasthya-setu/shared-types';
+import {
+  healthIdToLoginEmail,
+  type CreatePatientAccountRequest,
+  type CreatePatientAccountResponse,
+  type CreatePatientRequest,
+} from '@swasthya-setu/shared-types';
 
 import { getSupabase } from '../supabaseClient';
 import { verifyAuth } from '../auth/verifyAuth';
 import { requireRole } from '../auth/requireRole';
 import { generateHealthId } from '../patients/generateHealthId';
+import { generateTempPassword } from '../patients/generateTempPassword';
 import { PATIENT_COLUMNS, toPatient } from '../patients/repository';
 import { canAccessPatient } from '../patients/access';
 import { recordAudit } from '../patients/audit';
@@ -58,6 +64,102 @@ patientsRouter.post('/patients', verifyAuth, requireRole('anm_asha', 'doctor'), 
 
   res.status(500).json({ error: 'Could not generate a unique health ID. Please try again.' });
 });
+
+// Give a patient their own login, from the field worker's phone, while the
+// patient is still in front of them. The alternative this replaces — the
+// patient signs up separately and an operator links the two records
+// afterwards — needs a human with service-role access for every single
+// registration, and leaves days where the record exists but the person it
+// belongs to can't reach it.
+//
+// email_confirm is set because the field worker has just met this person:
+// the confirmation round-trip would only prove control of an inbox, which
+// is neither the identity check that matters here nor something many
+// patients have. That's also what makes the derived-email path work at
+// all, since nothing is ever delivered to it.
+patientsRouter.post(
+  '/patients/:healthId/account',
+  verifyAuth,
+  requireRole('anm_asha', 'doctor'),
+  async (req, res) => {
+    const supabase = getSupabase()!;
+    const body = req.body as Partial<CreatePatientAccountRequest>;
+    const providedEmail = body.email?.trim().toLowerCase();
+
+    const { data, error } = await supabase
+      .from('patients')
+      .select(PATIENT_COLUMNS)
+      .eq('health_id', req.params.healthId.toUpperCase())
+      .maybeSingle();
+
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    if (!data) {
+      res.status(404).json({ error: 'No patient matches that health ID.' });
+      return;
+    }
+
+    const patient = toPatient(data);
+    if (patient.userId) {
+      res.status(409).json({ error: 'This patient already has an app login.' });
+      return;
+    }
+    const allowed = await canAccessPatient(supabase, req.user!, patient);
+    if (!allowed) {
+      res.status(403).json({
+        error: "Your facility doesn't have access to this patient's record.",
+        needsConsent: true,
+      });
+      return;
+    }
+
+    const email = providedEmail || healthIdToLoginEmail(patient.healthId);
+    const temporaryPassword = generateTempPassword();
+
+    const { data: created, error: createError } = await supabase.auth.admin.createUser({
+      email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: { full_name: patient.fullName, role: 'patient' },
+    });
+    if (createError || !created.user) {
+      res.status(400).json({ error: createError?.message ?? 'Could not create the login.' });
+      return;
+    }
+
+    // Filtering on user_id being null makes this the point where two field
+    // workers pressing the button at once resolve: the loser matches no
+    // row and cleans up after itself, rather than silently stranding an
+    // account nobody can reach.
+    const { data: linked, error: linkError } = await supabase
+      .from('patients')
+      .update({ user_id: created.user.id })
+      .eq('id', patient.id)
+      .is('user_id', null)
+      .select('id')
+      .maybeSingle();
+
+    if (linkError || !linked) {
+      await supabase.auth.admin.deleteUser(created.user.id);
+      res.status(500).json({ error: 'Could not link the new login to this patient. Please try again.' });
+      return;
+    }
+
+    await recordAudit(supabase, {
+      patientId: patient.id,
+      actorId: req.user!.id,
+      action: 'create_patient_account',
+      metadata: { derivedLogin: !providedEmail },
+    });
+
+    res.status(201).json({
+      loginId: providedEmail || patient.healthId,
+      temporaryPassword,
+    } satisfies CreatePatientAccountResponse);
+  }
+);
 
 patientsRouter.get('/patients/search', verifyAuth, requireRole('anm_asha', 'doctor'), async (req, res) => {
   const supabase = getSupabase()!;
