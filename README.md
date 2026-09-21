@@ -1,4 +1,4 @@
-# SwasthyaSetu
+# Swasthyasetu
 
 Role-based care-continuity platform for rural healthcare (SIH 2026 prototype):
 patients, ANM/ASHA field workers, doctors and district admins share a

@@ -77,7 +77,7 @@ export function ResetPassword() {
     return (
       <div className="login-page">
         <div className="login-card">
-          <h1>SwasthyaSetu</h1>
+          <h1>Swasthyasetu</h1>
           <p className="muted">This reset link is invalid or has expired. Request a new one from the sign-in page.</p>
         </div>
       </div>
@@ -88,7 +88,7 @@ export function ResetPassword() {
     return (
       <div className="login-page">
         <div className="login-card">
-          <h1>SwasthyaSetu</h1>
+          <h1>Swasthyasetu</h1>
           <p className="muted">Password updated. Reload this page and sign in with your new password.</p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export function ResetPassword() {
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>SwasthyaSetu</h1>
+        <h1>Swasthyasetu</h1>
         <p className="muted">Set a new password</p>
         <input
           type="password"

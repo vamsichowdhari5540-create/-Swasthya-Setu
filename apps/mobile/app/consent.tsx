@@ -10,10 +10,10 @@ export default function ConsentScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-      <Text style={styles.heading}>What SwasthyaSetu accesses</Text>
+      <Text style={styles.heading}>What Swasthyasetu accesses</Text>
 
       <Text style={[styles.paragraph, { color: colors.muted }]}>
-        SwasthyaSetu keeps one shared health record per patient so an ANM/ASHA worker, a doctor
+        Swasthyasetu keeps one shared health record per patient so an ANM/ASHA worker, a doctor
         and the patient themselves are always looking at the same continuity-of-care history —
         instead of the patient re-explaining it at every visit.
       </Text>

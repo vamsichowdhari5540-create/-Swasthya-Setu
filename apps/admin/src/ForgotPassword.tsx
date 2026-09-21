@@ -33,7 +33,7 @@ export function ForgotPassword({ onBack }: { onBack: () => void }) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1>SwasthyaSetu</h1>
+        <h1>Swasthyasetu</h1>
         <p className="muted">Reset your password</p>
         {sent ? (
           <p className="muted small">If an account exists for that email, a reset link is on its way.</p>

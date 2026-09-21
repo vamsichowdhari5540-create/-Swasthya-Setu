@@ -24,7 +24,7 @@ export function Login({
   return (
     <div className="login-page">
       <form className="login-card" onSubmit={handleSubmit}>
-        <h1>SwasthyaSetu</h1>
+        <h1>Swasthyasetu</h1>
         <p className="muted">District Admin Console</p>
         <input
           type="email"

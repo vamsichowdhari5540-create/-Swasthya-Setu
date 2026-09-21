@@ -1,4 +1,4 @@
-# SwasthyaSetu — Admin Console
+# Swasthyasetu — Admin Console
 
 Phase 9's District Dashboard: React + Vite, static, deployed separately
 from the mobile app (see the root `README.md`'s Deploying section).

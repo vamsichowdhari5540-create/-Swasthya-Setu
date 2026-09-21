@@ -117,7 +117,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ title: 'SwasthyaSetu' }} />
+        <Stack.Screen name="index" options={{ title: 'Swasthyasetu' }} />
         <Stack.Screen name="login" options={{ title: t('title_signIn'), headerShown: false }} />
         <Stack.Screen name="signup" options={{ title: t('title_signUp') }} />
         <Stack.Screen name="forgot-password" options={{ title: t('title_forgotPassword') }} />

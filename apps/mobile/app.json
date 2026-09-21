@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SwasthyaSetu",
+    "name": "Swasthyasetu",
     "slug": "swasthya-setu",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -50,15 +50,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "SwasthyaSetu uses the camera to scan a patient's QR digital health ID."
+          "cameraPermission": "Swasthyasetu uses the camera to scan a patient's QR digital health ID."
         }
       ],
       "expo-sqlite",
       [
         "@config-plugins/react-native-webrtc",
         {
-          "cameraPermission": "SwasthyaSetu uses the camera for video teleconsultations.",
-          "microphonePermission": "SwasthyaSetu uses the microphone for teleconsultations."
+          "cameraPermission": "Swasthyasetu uses the camera for video teleconsultations.",
+          "microphonePermission": "Swasthyasetu uses the microphone for teleconsultations."
         }
       ],
       "expo-localization"

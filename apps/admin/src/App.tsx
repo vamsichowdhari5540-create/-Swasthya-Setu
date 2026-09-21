@@ -42,7 +42,7 @@ export default function App() {
     return (
       <div className="login-page">
         <div className="login-card">
-          <h1>SwasthyaSetu</h1>
+          <h1>Swasthyasetu</h1>
           <p className="muted">
             Signed in as {state.profile.fullName} ({state.profile.role}) — this console is for district admins only.
           </p>

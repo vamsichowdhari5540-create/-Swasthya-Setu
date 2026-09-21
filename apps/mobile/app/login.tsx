@@ -29,7 +29,7 @@ export default function LoginScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={styles.title}>SwasthyaSetu</Text>
+      <Text style={styles.title}>Swasthyasetu</Text>
       <Text style={[styles.subtitle, { color: colors.muted }]}>{t('login_subtitle')}</Text>
 
       <TextInput
