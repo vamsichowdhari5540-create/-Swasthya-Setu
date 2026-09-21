@@ -22,6 +22,7 @@ const STRINGS = {
   welcome: { en: 'Welcome', hi: 'स्वागत है', te: 'స్వాగతం' },
   yourNavigation: { en: 'Your navigation', hi: 'आपका मेनू', te: 'మీ మెనూ' },
   signOut: { en: 'Sign out', hi: 'साइन आउट', te: 'సైన్ అవుట్' },
+  nav_changePassword: { en: 'Change password', hi: 'पासवर्ड बदलें', te: 'పాస్‌వర్డ్ మార్చండి' },
   role_patient: { en: 'Patient', hi: 'मरीज़', te: 'రోగి' },
   role_anm_asha: { en: 'ANM / ASHA Field Worker', hi: 'एएनएम / आशा कार्यकर्ता', te: 'ANM / ఆశా వర్కర్' },
   role_doctor: { en: 'Doctor', hi: 'डॉक्टर', te: 'డాక్టర్' },
@@ -119,6 +120,31 @@ const STRINGS = {
     hi: 'अपना पासवर्ड रीसेट करने के लिए अपने ईमेल का लिंक वेब ब्राउज़र में खोलें।',
     te: 'మీ పాస్‌వర్డ్ రీసెట్ చేయడానికి మీ ఇమెయిల్‌లోని లింక్‌ను వెబ్ బ్రౌజర్‌లో తెరవండి.',
   },
+
+  changePassword_title: { en: 'Change password', hi: 'पासवर्ड बदलें', te: 'పాస్‌వర్డ్ మార్చండి' },
+  changePassword_subtitle: {
+    en: 'Choose a new password for your account.',
+    hi: 'अपने खाते के लिए नया पासवर्ड चुनें।',
+    te: 'మీ ఖాతా కోసం కొత్త పాస్‌వర్డ్ ఎంచుకోండి.',
+  },
+  changePassword_newPassword: { en: 'New password', hi: 'नया पासवर्ड', te: 'కొత్త పాస్‌వర్డ్' },
+  changePassword_confirmPassword: {
+    en: 'Confirm new password',
+    hi: 'नए पासवर्ड की पुष्टि करें',
+    te: 'కొత్త పాస్‌వర్డ్‌ను నిర్ధారించండి',
+  },
+  changePassword_mismatch: {
+    en: 'Passwords do not match.',
+    hi: 'पासवर्ड मेल नहीं खाते।',
+    te: 'పాస్‌వర్డ్‌లు సరిపోలలేదు.',
+  },
+  changePassword_submit: { en: 'Update password', hi: 'पासवर्ड अपडेट करें', te: 'పాస్‌వర్డ్ అప్‌డేట్ చేయండి' },
+  changePassword_success: {
+    en: 'Password updated.',
+    hi: 'पासवर्ड अपडेट हो गया।',
+    te: 'పాస్‌వర్డ్ అప్‌డేట్ అయ్యింది.',
+  },
+  changePassword_done: { en: 'Done', hi: 'हो गया', te: 'పూర్తయింది' },
 
   register_fullName: { en: 'Full name', hi: 'पूरा नाम', te: 'పూర్తి పేరు' },
   register_fullNameHint: {

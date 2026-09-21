@@ -118,6 +118,14 @@ export default function HomeScreen() {
           </Pressable>
           {menuOpen && (
             <View style={[styles.avatarMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Pressable
+                style={styles.avatarMenuItem}
+                onPress={() => {
+                  setMenuOpen(false);
+                  router.push('/change-password');
+                }}>
+                <Text style={{ color: colors.text, fontWeight: '600', fontSize: 13 }}>{t('nav_changePassword')}</Text>
+              </Pressable>
               <Pressable style={styles.avatarMenuItem} onPress={handleSignOut}>
                 <Text style={{ color: '#c0392b', fontWeight: '700', fontSize: 13 }}>{t('signOut')}</Text>
               </Pressable>
