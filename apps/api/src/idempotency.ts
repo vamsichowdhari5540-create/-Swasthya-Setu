@@ -42,6 +42,23 @@ export async function insertIdempotent<T>(
     if (fetchError || !existing) {
       return { data: null, error: error.message, replayed: false };
     }
+    // The unique-constraint hit only proves *some* row already has this
+    // client_mutation_id, not that it's the caller's own retry — every
+    // caller of this function passes a client-supplied header value as
+    // the key, and client_mutation_id is unique per table, not scoped to
+    // the patient the request has already been authorized against. Without
+    // this check, colliding with (or knowing) another patient's mutation
+    // id would hand back that patient's row instead of the caller's own,
+    // straight past requirePatientAccess. A genuine retry always matches
+    // the row it originally created, so this only ever rejects a
+    // collision, never a real replay.
+    const row = existing as unknown as Record<string, unknown>;
+    for (const [key, value] of Object.entries(values)) {
+      if (key === 'client_mutation_id') continue;
+      if (row[key] !== value) {
+        return { data: null, error: 'This idempotency key was already used for a different request.', replayed: false };
+      }
+    }
     return { data: existing as T, error: null, replayed: true };
   }
 

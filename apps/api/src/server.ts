@@ -1,5 +1,6 @@
 import http from 'node:http';
 
+import compression from 'compression';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -28,6 +29,11 @@ const app = express();
 // configured yet.
 app.use(cors(env.corsOrigins ? { origin: env.corsOrigins } : {}));
 app.use(helmet());
+// Every client here is a phone on rural mobile data — the dashboard,
+// referral lists and encounter timelines are JSON, which gzip shrinks
+// dramatically, and the CPU cost of compressing them is negligible next
+// to what a slow uplink already costs in wall-clock time.
+app.use(compression());
 // A generic ceiling against scripted abuse (the enumeration class of bug
 // fixed in patients/search.ts, or simple credential-stuffing against
 // /auth), not tuned to any endpoint's real traffic shape — a few staff

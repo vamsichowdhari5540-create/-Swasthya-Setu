@@ -364,3 +364,8 @@ alter table audit_events add constraint audit_events_action_check
     'reassign_referral', 'cancel_referral',
     'create_patient_account'
   ));
+
+-- GET /patients/me (a patient loading their own record — the very first
+-- call every patient session makes) filters on this column, and it was
+-- missing from the indexing pass above.
+create index if not exists patients_user_id_idx on patients (user_id);
