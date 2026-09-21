@@ -17,6 +17,7 @@
     "dev:admin": "npm run dev --workspace apps/admin",
     "lint": "npm run lint --workspace apps/api && npm run lint --workspace apps/mobile && npm run lint --workspace apps/admin",
     "typecheck": "npm run typecheck --workspace apps/api && npm run typecheck --workspace apps/mobile && npm run typecheck --workspace apps/admin",
+    "test": "npm run test --workspace apps/api",
     "seed": "npm run seed --workspace apps/api",
     "seed:users": "npm run seed:users --workspace apps/api"
   }

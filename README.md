@@ -572,9 +572,24 @@ entirely. One role per profile, same URL.
 ```bash
 npm run lint
 npm run typecheck
+npm run test           # integration tests — see below
 npm run build:api      # compiles shared-types, then the API, to dist/
 npm run build:web      # static Expo web export to apps/mobile/dist/
 ```
+
+## Tests
+
+`apps/api/src/routes/consent.test.ts` — the one integration test this repo
+has, and deliberately the one that matters most: it proves the exact claim
+the consent model makes, grant → access → revoke → denied, against the
+real API and the real database rather than a mock, using two of the demo
+accounts above (an ANM/ASHA and a doctor at a different facility) plus a
+throwaway patient it creates and tears down itself. Requires
+`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` in `apps/api/.env` (already
+needed for everything else) and the demo accounts seeded (`npm run
+seed:users`). `apps/api/src/app.ts` exists separately from `server.ts` so
+this can exercise the real Express middleware stack in-process
+(`supertest`) without binding a port.
 
 `packages/shared-types` is compiled (not consumed as raw `.ts`) because the
 production API runs `node dist/server.js`, and plain Node can't `require()` a
