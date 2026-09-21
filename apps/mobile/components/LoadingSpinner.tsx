@@ -5,8 +5,6 @@ import Svg, { Circle } from 'react-native-svg';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
 // A branded ring rather than the platform's default spinner — a small
 // touch, but this app's loading state is the single most-seen piece of UI
 // in a live demo (it's what's on screen between almost every tap), so it's
@@ -48,7 +46,7 @@ export function LoadingSpinner({ size = 40, color }: { size?: number; color?: st
           opacity={0.18}
           fill="none"
         />
-        <AnimatedCircle
+        <Circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
