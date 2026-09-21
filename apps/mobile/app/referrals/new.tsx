@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import type { Facility } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -11,6 +11,8 @@ import { useSync } from '@/context/SyncContext';
 import { loadFacilities } from '@/lib/facilitiesCache';
 import { useLanguage } from '@/lib/i18n';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function NewReferralScreen() {
   const colorScheme = useColorScheme();
@@ -54,11 +56,7 @@ export default function NewReferralScreen() {
   };
 
   if (facilities === null) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
@@ -67,9 +65,10 @@ export default function NewReferralScreen() {
 
       <Text style={styles.label}>{t('referral_receivingFacility')}</Text>
       {options.length === 0 && (
-        <Text style={{ color: colors.muted, marginBottom: 12 }}>
-          No other facilities cached yet — connect once so this list is available offline later.
-        </Text>
+        <EmptyState
+          icon="cloud-offline-outline"
+          message="No other facilities cached yet — connect once so this list is available offline later."
+        />
       )}
       {options.map((facility) => {
         const active = facility.id === facilityId;
@@ -123,11 +122,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     paddingBottom: 48,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   subtitle: {
     fontSize: 14,

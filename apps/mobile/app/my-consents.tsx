@@ -11,6 +11,8 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/api';
 import { useOwnPatient } from '@/lib/useOwnPatient';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function MyConsentsScreen() {
   const colorScheme = useColorScheme();
@@ -41,11 +43,7 @@ export default function MyConsentsScreen() {
   }, [own, reload]);
 
   if (own.kind === 'loading' || (own.kind === 'done' && (consents === null || facilities === null))) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (own.kind === 'error') {
@@ -102,7 +100,7 @@ export default function MyConsentsScreen() {
 
       <Text style={styles.sectionTitle}>{t('consent_facilitiesWithAccess')}</Text>
       {activeConsents.length === 0 ? (
-        <Text style={[styles.placeholder, { color: colors.muted }]}>{t('consent_noOtherFacility')}</Text>
+        <EmptyState icon="business-outline" message={t('consent_noOtherFacility')} />
       ) : (
         activeConsents.map((consent) => (
           <View
@@ -129,7 +127,7 @@ export default function MyConsentsScreen() {
 
       <Text style={styles.sectionTitle}>{t('consent_grantAccessTitle')}</Text>
       {grantableFacilities.length === 0 ? (
-        <Text style={[styles.placeholder, { color: colors.muted }]}>{t('consent_allHaveAccess')}</Text>
+        <EmptyState icon="checkmark-circle-outline" message={t('consent_allHaveAccess')} />
       ) : (
         grantableFacilities.map((facility) => (
           <View
@@ -188,10 +186,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 10,
     marginTop: 8,
-  },
-  placeholder: {
-    fontSize: 13,
-    marginBottom: 20,
   },
   card: {
     borderRadius: 14,

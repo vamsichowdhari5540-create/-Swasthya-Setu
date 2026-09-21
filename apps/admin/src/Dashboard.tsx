@@ -56,7 +56,11 @@ export function Dashboard({
       </header>
 
       {error && <p className="error">{error}</p>}
-      {!data && !error && <p className="muted">Loading…</p>}
+      {!data && !error && (
+        <div className="loading-page" style={{ minHeight: '240px' }}>
+          <div className="spinner" />
+        </div>
+      )}
 
       {data && (
         <>

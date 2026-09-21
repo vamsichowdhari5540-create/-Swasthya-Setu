@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { Encounter } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useOwnPatient } from '@/lib/useOwnPatient';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function MyTimelineScreen() {
   const colorScheme = useColorScheme();
@@ -24,11 +26,7 @@ export default function MyTimelineScreen() {
   }, [own, session]);
 
   if (own.kind === 'loading' || (own.kind === 'done' && encounters === null)) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (own.kind === 'error') {
@@ -41,9 +39,7 @@ export default function MyTimelineScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      {encounters?.length === 0 && (
-        <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>{t('patient_noVisits')}</Text>
-      )}
+      {encounters?.length === 0 && <EmptyState icon="time-outline" message={t('patient_noVisits')} />}
       {encounters?.map((encounter) => (
         <View
           key={encounter.id}

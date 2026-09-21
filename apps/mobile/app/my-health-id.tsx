@@ -1,4 +1,4 @@
-import { ActivityIndicator, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { Text, View } from '@/components/Themed';
@@ -6,6 +6,7 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useOwnPatient } from '@/lib/useOwnPatient';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function MyHealthIdScreen() {
   const colorScheme = useColorScheme();
@@ -14,11 +15,7 @@ export default function MyHealthIdScreen() {
   const { t } = useLanguage();
 
   if (state.kind === 'loading') {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (state.kind === 'error') {

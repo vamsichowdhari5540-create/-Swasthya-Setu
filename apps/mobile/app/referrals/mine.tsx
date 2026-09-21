@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { FlatList, Pressable, StyleSheet } from 'react-native';
 import type { Referral } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -12,6 +12,8 @@ import { useReferralUpdates } from '@/lib/socket';
 import { useOwnPatient } from '@/lib/useOwnPatient';
 import { ReferralStatusBadge } from '@/components/ReferralStatusBadge';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function MyReferralsScreen() {
   const colorScheme = useColorScheme();
@@ -33,11 +35,7 @@ export default function MyReferralsScreen() {
   useReferralUpdates(session?.access_token, load);
 
   if (own.kind === 'loading' || (own.kind === 'done' && referrals === null)) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (own.kind === 'error') {
@@ -54,11 +52,7 @@ export default function MyReferralsScreen() {
         data={referrals}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>
-            {t('list_empty')}
-          </Text>
-        }
+        ListEmptyComponent={<EmptyState icon="swap-horizontal-outline" message={t('list_empty')} />}
         renderItem={({ item }) => (
           <Link href={`/referrals/${item.id}`} asChild>
             <Pressable

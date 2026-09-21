@@ -18,6 +18,7 @@ import { loadFacilities } from '@/lib/facilitiesCache';
 import { connectSocket, useReferralUpdates } from '@/lib/socket';
 import { ReferralStatusBadge } from '@/components/ReferralStatusBadge';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export default function ReferralDetailScreen() {
   const colorScheme = useColorScheme();
@@ -76,11 +77,7 @@ export default function ReferralDetailScreen() {
   useReferralUpdates(session?.access_token, onChanged);
 
   if (!referral) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   const isReceivingFacility = !!profile?.facilityId && profile.facilityId === referral.receivingFacilityId;
@@ -333,11 +330,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 24,
     paddingBottom: 48,
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   patientName: {
     fontSize: 22,

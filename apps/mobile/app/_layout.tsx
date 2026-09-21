@@ -3,14 +3,14 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useRouter, useSegments }
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { ActivityIndicator, Platform, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { SyncProvider } from '@/context/SyncContext';
 import { LanguageProvider, useLanguage } from '@/lib/i18n';
-import Colors from '@/constants/Colors';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -76,7 +76,6 @@ export default function RootLayout() {
 // always be bypassed by calling the API directly.
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme];
   const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -107,11 +106,7 @@ function RootLayoutNav() {
   // state — re-running the exchange against a code Supabase already
   // consumed, which fails and shows "invalid link" for a link that wasn't.
   if (loading && segments[0] !== 'reset-password') {
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background }}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (

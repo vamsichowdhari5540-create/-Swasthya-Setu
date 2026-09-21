@@ -9,6 +9,8 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { EmptyState } from '@/components/EmptyState';
 
 const TRIAGE_COLORS: Record<string, string> = {
   routine: '#2e7d32',
@@ -109,10 +111,12 @@ export default function SummariesScreen() {
       )}
 
       {error && <Text style={styles.error}>{error}</Text>}
-      {summaries === null && <ActivityIndicator color={colors.tint} style={{ marginTop: 20 }} />}
-      {summaries?.length === 0 && (
-        <Text style={[styles.note, { color: colors.muted, marginTop: 12 }]}>{t('summary_none')}</Text>
+      {summaries === null && (
+        <View style={{ alignItems: 'center', marginTop: 20 }} lightColor="transparent" darkColor="transparent">
+          <LoadingSpinner size={28} />
+        </View>
       )}
+      {summaries?.length === 0 && <EmptyState icon="sparkles-outline" message={t('summary_none')} />}
 
       {summaries?.map((summary) => {
         const isDraft = summary.status === 'draft';

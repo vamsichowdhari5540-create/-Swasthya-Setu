@@ -17,6 +17,9 @@ import { apiFetch, ApiError } from '@/lib/api';
 import { useSync } from '@/context/SyncContext';
 import { useLanguage } from '@/lib/i18n';
 import { VoiceInputButton } from '@/components/VoiceInputButton';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { EmptyState } from '@/components/EmptyState';
 
 type PatientState =
   | { kind: 'loading' }
@@ -128,11 +131,7 @@ export default function PatientDetailScreen() {
       : [];
 
   if (state.kind === 'loading') {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (state.kind === 'needsConsent') {
@@ -263,9 +262,13 @@ export default function PatientDetailScreen() {
 
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={styles.cardLabel}>{t('patient_timeline')}</Text>
-        {encounters === null && <ActivityIndicator color={colors.tint} />}
+        {encounters === null && (
+          <View style={styles.inlineLoader} lightColor="transparent" darkColor="transparent">
+            <LoadingSpinner size={24} />
+          </View>
+        )}
         {encounters?.length === 0 && pendingEncounters.length === 0 && (
-          <Text style={[styles.placeholder, { color: colors.muted }]}>{t('patient_noVisits')}</Text>
+          <EmptyState icon="time-outline" message={t('patient_noVisits')} />
         )}
         {pendingEncounters.map((item) => {
           const payload = JSON.parse(item.payload) as { notes: string };
@@ -364,6 +367,10 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     fontSize: 13,
+  },
+  inlineLoader: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
   row: {
     flexDirection: 'row',

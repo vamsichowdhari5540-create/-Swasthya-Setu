@@ -1,6 +1,6 @@
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
+import { FlatList, Pressable, StyleSheet, TextInput } from 'react-native';
 import type { Patient } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -9,6 +9,8 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function SearchPatientsScreen() {
   const colorScheme = useColorScheme();
@@ -49,7 +51,11 @@ export default function SearchPatientsScreen() {
         autoCapitalize="none"
       />
 
-      {loading && <ActivityIndicator style={{ marginTop: 20 }} color={colors.tint} />}
+      {loading && (
+        <View style={{ alignItems: 'center', marginTop: 20 }} lightColor="transparent" darkColor="transparent">
+          <LoadingSpinner size={28} />
+        </View>
+      )}
 
       <FlatList
         data={results}
@@ -57,9 +63,7 @@ export default function SearchPatientsScreen() {
         contentContainerStyle={{ paddingTop: 16 }}
         ListEmptyComponent={
           !loading && searched ? (
-            <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 20 }}>
-              {t('search_noResults')} &quot;{query}&quot;.
-            </Text>
+            <EmptyState icon="search-outline" message={`${t('search_noResults')} "${query}".`} />
           ) : null
         }
         renderItem={({ item }) => (

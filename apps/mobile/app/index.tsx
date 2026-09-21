@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import type { ComponentProps } from 'react';
 import type { UserRole } from '@swasthya-setu/shared-types';
 
@@ -13,6 +13,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { useSync } from '@/context/SyncContext';
 import { LANGUAGES, useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 const ROLE_LABEL_KEYS: Record<UserRole, 'role_patient' | 'role_anm_asha' | 'role_doctor' | 'role_district_admin'> = {
   patient: 'role_patient',
@@ -91,14 +92,7 @@ export default function HomeScreen() {
   };
 
   if (!profile) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-        <Text style={[styles.muted, { color: colors.muted, marginTop: 12 }]}>
-          Loading your profile...
-        </Text>
-      </View>
-    );
+    return <LoadingScreen label="Loading your profile..." />;
   }
 
   return (
@@ -208,14 +202,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  muted: {
-    fontSize: 13,
   },
   headerRow: {
     flexDirection: 'row',

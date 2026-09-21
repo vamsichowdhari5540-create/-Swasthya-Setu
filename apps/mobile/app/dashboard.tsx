@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { DashboardResponse } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -8,6 +8,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/api';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 // Phase 9: District Dashboard & Hardening. Read-only, aggregated view for
 // district_admin — bottlenecks (pending/accepted/completed counts,
@@ -36,11 +37,7 @@ export default function DashboardScreen() {
   }
 
   if (!data) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (

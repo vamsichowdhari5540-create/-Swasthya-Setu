@@ -20,8 +20,8 @@ export default function App() {
 
   if (state.kind === 'loading') {
     return (
-      <div className="login-page">
-        <p className="muted">Loading…</p>
+      <div className="loading-page">
+        <div className="spinner" />
       </div>
     );
   }

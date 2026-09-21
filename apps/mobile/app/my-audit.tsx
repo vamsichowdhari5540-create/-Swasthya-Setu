@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import type { AuditAction, AuditEvent } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
@@ -9,6 +9,8 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useOwnPatient } from '@/lib/useOwnPatient';
 import { useLanguage } from '@/lib/i18n';
+import { LoadingScreen } from '@/components/LoadingScreen';
+import { EmptyState } from '@/components/EmptyState';
 
 const ACTION_LABEL_KEYS: Record<
   AuditAction,
@@ -55,11 +57,7 @@ export default function MyAuditScreen() {
   }, [own, session]);
 
   if (own.kind === 'loading' || (own.kind === 'done' && events === null)) {
-    return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator color={colors.tint} />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (own.kind === 'error') {
@@ -72,9 +70,7 @@ export default function MyAuditScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={styles.container}>
-      {events?.length === 0 && (
-        <Text style={{ color: colors.muted, textAlign: 'center', marginTop: 40 }}>{t('audit_empty')}</Text>
-      )}
+      {events?.length === 0 && <EmptyState icon="shield-checkmark-outline" message={t('audit_empty')} />}
       {events?.map((event) => (
         <View
           key={event.id}
