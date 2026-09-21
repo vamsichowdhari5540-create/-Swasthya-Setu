@@ -30,7 +30,17 @@ const NEEDS_FACILITY: UserRole[] = ['anm_asha', 'doctor'];
 // from a public form would be a privilege-escalation hole. The
 // handle_new_user trigger enforces this server-side too (see schema.sql),
 // so this is a UX filter, not the actual security boundary.
-const SELF_SIGNUP_ROLES: UserRole[] = USER_ROLES.filter((role) => role !== 'district_admin');
+//
+// Patient is excluded too, but for a different reason: a patient's login
+// is now issued by the field worker at registration (see
+// apps/api routes/patients.ts's :healthId/account endpoint), already
+// linked to their record. Self-signing up here instead would just create
+// an orphaned login nobody's record points at — this form was never able
+// to link one, so removing the option removes a dead end, not a
+// capability.
+const SELF_SIGNUP_ROLES: UserRole[] = USER_ROLES.filter(
+  (role) => role !== 'district_admin' && role !== 'patient'
+);
 
 export default function SignUpScreen() {
   const colorScheme = useColorScheme();
@@ -42,7 +52,7 @@ export default function SignUpScreen() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('patient');
+  const [role, setRole] = useState<UserRole>('anm_asha');
   const [facilities, setFacilities] = useState<Facility[] | null>(null);
   const [facilityId, setFacilityId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

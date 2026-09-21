@@ -98,7 +98,7 @@ the `patients` table, so after a reset `patient@...`/`patient2@...` are
 logins with no linked record until a new patient is registered and
 re-linked the same way.
 
-### Real sign-up (every role, real email/password)
+### Real sign-up (staff roles, real email/password)
 
 The demo accounts above are one path in; the mobile app's **Sign Up** screen
 (and `apps/mobile/app/forgot-password.tsx` / `reset-password.tsx`) is a
@@ -107,18 +107,25 @@ someone actually enters, not seeded credentials. This is what lets several
 people demo the app from their own devices at once instead of everyone
 sharing `Demo@1234`.
 
-- **Patient, ANM/ASHA, and Doctor are self-service** — there's no invite
-  code or approval step for these three. That's a deliberate choice for a
-  judged demo (see the design discussion that led here), not something to
-  carry into a real deployment: anyone can currently self-declare as a
-  doctor.
-- **District Admin is deliberately excluded from self-signup.** It's a
-  district-wide privileged role, so it isn't in the app's role picker and,
-  more importantly, isn't reachable even by calling the signup API
-  directly with a crafted payload — `handle_new_user` (below) only ever
-  assigns `anm_asha`/`doctor` from client-supplied data, everything else
-  becomes `patient`. A District Admin account can only be created by an
-  operator running SQL directly, e.g.
+- **ANM/ASHA and Doctor are self-service** — there's no invite code or
+  approval step for either. That's a deliberate choice for a judged demo
+  (see the design discussion that led here), not something to carry into a
+  real deployment: anyone can currently self-declare as a doctor.
+- **Patient is not in the role picker.** A patient's login is issued by an
+  ANM/ASHA at registration (see *Patient logins, issued by the field
+  worker* below), already linked to their record — self-signing up here
+  instead would only create an orphaned login nothing points at, since this
+  form has no way to link one. `handle_new_user` (below) still falls back
+  to `patient` for any role it doesn't recognize, so calling the signup API
+  directly with `role: "patient"` still works exactly as it always did;
+  only the UI path for it is gone.
+- **District Admin is deliberately excluded from self-signup**, for a
+  different reason: it's a district-wide privileged role, so it isn't in
+  the app's role picker and, more importantly, isn't reachable even by
+  calling the signup API directly with a crafted payload — `handle_new_user`
+  only ever assigns `anm_asha`/`doctor` from client-supplied data,
+  everything else becomes `patient`. A District Admin account can only be
+  created by an operator running SQL directly, e.g.
   `update public.profiles set role = 'district_admin' where email = '...';`
   after that person has signed up normally.
 - ANM/ASHA and Doctor signups pick a facility from a dropdown
@@ -131,11 +138,6 @@ sharing `Demo@1234`.
   there's never a signed-up account with no role. The role value is
   whitelisted server-side, not merely trusted and range-checked, since
   `raw_user_meta_data` is entirely client-controlled.
-- **A self-signed-up patient still isn't linked to a `patients` row.**
-  Signing up on your own creates a login, not a medical record; the record
-  is created when an ANM/ASHA registers you. The two are joined by the
-  field worker instead, in the flow below — a patient who signs up
-  independently still has to be matched up by hand.
 
 ### Patient logins, issued by the field worker
 
