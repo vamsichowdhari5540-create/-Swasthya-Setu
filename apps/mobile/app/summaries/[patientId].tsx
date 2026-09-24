@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
-import type { AiSummary } from '@swasthya-setu/shared-types';
+import type { AiSummary, SummaryEntry } from '@swasthya-setu/shared-types';
+import { parseSummaryEntries } from '@swasthya-setu/shared-types';
 
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
@@ -17,6 +18,56 @@ const TRIAGE_COLORS: Record<string, string> = {
   priority: '#b7791f',
   urgent: '#c0392b',
 };
+
+// One editable line per visit, e.g. "12 Sep 2026 — Head — Headache: BP
+//162/98, advised low-salt diet". Lets a doctor edit structured entries as
+// plain text instead of raw JSON, under time pressure.
+function formatEntriesAsLines(entries: SummaryEntry[]): string {
+  return entries
+    .map((e) => {
+      const head = [e.date, e.bodyPart, e.complaint].filter(Boolean).join(' — ');
+      return head ? `${head}: ${e.note}` : e.note;
+    })
+    .join('\n');
+}
+
+function parseLinesAsEntries(text: string): SummaryEntry[] {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const colonIndex = line.indexOf(': ');
+      if (colonIndex === -1) return { date: '', bodyPart: '', complaint: '', note: line };
+      const [date = '', bodyPart = '', complaint = ''] = line.slice(0, colonIndex).split(' — ');
+      return { date, bodyPart, complaint, note: line.slice(colonIndex + 2) };
+    });
+}
+
+function SummaryEntries({ entries, colors }: { entries: SummaryEntry[]; colors: (typeof Colors)['light'] }) {
+  return (
+    <View lightColor="transparent" darkColor="transparent">
+      {entries.map((entry, index) => (
+        <View
+          key={index}
+          style={[styles.entryRow, { borderLeftColor: colors.tint }]}
+          lightColor="transparent"
+          darkColor="transparent">
+          <View style={styles.entryHeader} lightColor="transparent" darkColor="transparent">
+            {!!entry.date && <Text style={styles.entryDate}>{entry.date}</Text>}
+            {!!entry.bodyPart && (
+              <Text style={[styles.entryBadge, { color: colors.tint, borderColor: colors.tint }]}>
+                {entry.bodyPart}
+              </Text>
+            )}
+          </View>
+          {!!entry.complaint && <Text style={styles.entryComplaint}>{entry.complaint}</Text>}
+          <Text style={[styles.entryNote, { color: colors.muted }]}>{entry.note}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function SummariesScreen() {
   const colorScheme = useColorScheme();
@@ -57,12 +108,23 @@ export default function SummariesScreen() {
     }
   };
 
-  const saveEdit = async (id: string) => {
-    const editedText = drafts[id]?.trim();
+  // drafts[id] holds the doctor-edited text as one line per visit (see
+  // formatEntriesAsLines). If the summary being edited was structured
+  // entries, those lines are re-parsed back into the same JSON shape before
+  // saving; a legacy plain-prose summary is saved as-is.
+  const editedTextFor = (summary: AiSummary): string | undefined => {
+    const lines = drafts[summary.id]?.trim();
+    if (!lines) return undefined;
+    const original = parseSummaryEntries(summary.editedText ?? summary.draftText);
+    return original ? JSON.stringify(parseLinesAsEntries(lines)) : lines;
+  };
+
+  const saveEdit = async (summary: AiSummary) => {
+    const editedText = editedTextFor(summary);
     if (!editedText) return;
-    setBusyId(id);
+    setBusyId(summary.id);
     try {
-      await apiFetch<AiSummary>(session, `/api/summaries/${id}`, {
+      await apiFetch<AiSummary>(session, `/api/summaries/${summary.id}`, {
         method: 'PATCH',
         body: JSON.stringify({ editedText }),
       });
@@ -74,11 +136,11 @@ export default function SummariesScreen() {
     }
   };
 
-  const approve = async (id: string) => {
-    setBusyId(id);
+  const approve = async (summary: AiSummary) => {
+    setBusyId(summary.id);
     try {
-      const editedText = drafts[id]?.trim();
-      await apiFetch<AiSummary>(session, `/api/summaries/${id}/approve`, {
+      const editedText = editedTextFor(summary);
+      await apiFetch<AiSummary>(session, `/api/summaries/${summary.id}/approve`, {
         method: 'PATCH',
         body: JSON.stringify(editedText ? { editedText } : {}),
       });
@@ -120,7 +182,9 @@ export default function SummariesScreen() {
 
       {summaries?.map((summary) => {
         const isDraft = summary.status === 'draft';
-        const currentText = drafts[summary.id] ?? summary.editedText ?? summary.draftText;
+        const rawText = summary.editedText ?? summary.draftText;
+        const entries = parseSummaryEntries(rawText);
+        const currentLines = drafts[summary.id] ?? (entries ? formatEntriesAsLines(entries) : rawText);
         return (
           <View key={summary.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.rowBetween} lightColor="transparent" darkColor="transparent">
@@ -144,12 +208,14 @@ export default function SummariesScreen() {
                   styles.input,
                   { borderColor: colors.border, color: colors.text, backgroundColor: colors.background },
                 ]}
-                value={currentText}
+                value={currentLines}
                 onChangeText={(text) => setDrafts((prev) => ({ ...prev, [summary.id]: text }))}
                 multiline
               />
+            ) : entries ? (
+              <SummaryEntries entries={entries} colors={colors} />
             ) : (
-              <Text style={styles.body}>{summary.editedText ?? summary.draftText}</Text>
+              <Text style={styles.body}>{rawText}</Text>
             )}
 
             {isDraft && canReview && (
@@ -157,13 +223,13 @@ export default function SummariesScreen() {
                 <Pressable
                   style={[styles.secondaryButton, { borderColor: colors.tint }]}
                   disabled={busyId === summary.id}
-                  onPress={() => saveEdit(summary.id)}>
+                  onPress={() => saveEdit(summary)}>
                   <Text style={[styles.secondaryButtonText, { color: colors.tint }]}>{t('summary_saveEdit')}</Text>
                 </Pressable>
                 <Pressable
                   style={[styles.button, { backgroundColor: colors.tint, paddingHorizontal: 16 }]}
                   disabled={busyId === summary.id}
-                  onPress={() => approve(summary.id)}>
+                  onPress={() => approve(summary)}>
                   {busyId === summary.id ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
@@ -174,8 +240,7 @@ export default function SummariesScreen() {
             )}
 
             <Text style={[styles.footer, { color: colors.muted }]}>
-              {summary.source === 'template' ? 'Source: deterministic template' : `Model: ${summary.model} (${summary.source})`} · v
-              {summary.modelVersion} · by {summary.createdByName}
+              By {summary.createdByName}
               {summary.status === 'approved' && summary.reviewedByName
                 ? ` · approved by ${summary.reviewedByName}`
                 : ''}
@@ -204,4 +269,10 @@ const styles = StyleSheet.create({
   body: { fontSize: 14, marginBottom: 10 },
   input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14, minHeight: 90, textAlignVertical: 'top', marginBottom: 10 },
   footer: { fontSize: 10, marginTop: 4 },
+  entryRow: { borderLeftWidth: 3, paddingLeft: 10, marginBottom: 12 },
+  entryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  entryDate: { fontSize: 12, fontWeight: '700', marginRight: 8 },
+  entryBadge: { fontSize: 10, fontWeight: '700', borderWidth: 1, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1, textTransform: 'uppercase' },
+  entryComplaint: { fontSize: 13.5, fontWeight: '600', marginBottom: 2 },
+  entryNote: { fontSize: 13 },
 });

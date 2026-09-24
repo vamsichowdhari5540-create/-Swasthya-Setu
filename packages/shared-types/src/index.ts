@@ -215,6 +215,38 @@ export type SummaryStatus = 'draft' | 'approved';
 export type SummarySource = 'template' | 'groq' | 'gemini';
 export type TriageLevel = 'routine' | 'priority' | 'urgent';
 
+// One visit, distilled for a fast read in an emergency: date and body part
+// up front, chief complaint, then what was found or done. bodyPart/complaint
+// can be "" (the deterministic template fallback can't extract them from
+// free text — only a model can).
+export interface SummaryEntry {
+  date: string;
+  bodyPart: string;
+  complaint: string;
+  note: string;
+}
+
+// AiSummary.draftText/editedText hold this JSON-encoded. Returns null for
+// anything that isn't exactly that shape — including summaries generated
+// before this format existed — so a caller can fall back to rendering the
+// stored text as plain prose instead of crashing on an older row.
+export function parseSummaryEntries(text: string): SummaryEntry[] | null {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const isEntry = (v: unknown): v is SummaryEntry =>
+    !!v &&
+    typeof v === 'object' &&
+    typeof (v as SummaryEntry).date === 'string' &&
+    typeof (v as SummaryEntry).bodyPart === 'string' &&
+    typeof (v as SummaryEntry).complaint === 'string' &&
+    typeof (v as SummaryEntry).note === 'string';
+  return Array.isArray(value) && value.length > 0 && value.every(isEntry) ? (value as SummaryEntry[]) : null;
+}
+
 export interface AiSummary {
   id: string;
   patientId: string;

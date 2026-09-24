@@ -10,9 +10,10 @@ export interface GeneratedSummary {
   source: 'groq' | 'gemini' | 'template';
   model: string | null;
   modelVersion: string;
-  // Null when no model produced a narrative. The caller substitutes its
-  // own template text, which is the only copy that carries the patient's
-  // name — nothing in this module ever holds an identifier.
+  // JSON-encoded SummaryEntry[] (see @swasthya-setu/shared-types), null
+  // when no model produced one. The caller substitutes its own template
+  // entries, which are the only copy that carries the patient's name —
+  // nothing in this module ever holds an identifier.
   draftText: string | null;
   triageLevel: SummaryResult['triageLevel'] | null;
   triageRationale: string | null;
@@ -37,7 +38,7 @@ export async function generateSummary(templateSummary: string): Promise<Generate
       source: 'groq',
       model: groq.model,
       modelVersion: GROQ_ADAPTER_VERSION,
-      draftText: groq.result.summary,
+      draftText: JSON.stringify(groq.result.entries),
       triageLevel: groq.result.triageLevel,
       triageRationale: groq.result.triageRationale,
     };
@@ -49,7 +50,7 @@ export async function generateSummary(templateSummary: string): Promise<Generate
       source: 'gemini',
       model: gemini.model,
       modelVersion: GEMINI_ADAPTER_VERSION,
-      draftText: gemini.result.summary,
+      draftText: JSON.stringify(gemini.result.entries),
       triageLevel: gemini.result.triageLevel,
       triageRationale: gemini.result.triageRationale,
     };

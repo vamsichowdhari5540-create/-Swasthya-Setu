@@ -8,7 +8,7 @@ import { loadSummary } from '../summaries/middleware';
 import { recordAudit } from '../patients/audit';
 import { getIdempotencyKey, insertIdempotent } from '../idempotency';
 import { SUMMARY_SELECT, toSummary, type SummaryRow } from '../summaries/repository';
-import { buildTemplateSummary, DEIDENTIFIED_SUBJECT } from '../ai/template';
+import { buildTemplateSummary, buildTemplateEntries, DEIDENTIFIED_SUBJECT, type EncounterForSummary } from '../ai/template';
 import { generateSummary } from '../ai/generate';
 
 export const summariesRouter = Router();
@@ -19,13 +19,14 @@ interface EncounterNarrativeRow {
   facilities: { name: string }[] | { name: string } | null;
 }
 
-// Always rendered as "the patient" — this is both the input sent to Groq
-// or Gemini and the saved template fallback if neither produces a
-// narrative, so a doctor never sees one summary that names the patient
-// and another for the same visit that doesn't. The screen that displays
-// this already shows the patient's real name above it, so there's
-// nowhere the identity actually goes missing.
-async function loadTimelineNarrative(patientId: string): Promise<string> {
+// De-identified either way, so a doctor never sees one summary that names
+// the patient and another for the same visit that doesn't — the screen
+// that displays this already shows the patient's real name above it, so
+// there's nowhere the identity actually goes missing.
+// Used for two different things: the prose form is what's sent to Groq or
+// Gemini to restructure; the structured entries are the saved fallback if
+// neither model produces a usable reply.
+async function loadEncountersForSummary(patientId: string): Promise<EncounterForSummary[]> {
   const supabase = getSupabase()!;
   const { data } = await supabase
     .from('encounters')
@@ -34,7 +35,7 @@ async function loadTimelineNarrative(patientId: string): Promise<string> {
     .order('encounter_date', { ascending: true });
 
   const rows = (data ?? []) as unknown as EncounterNarrativeRow[];
-  const encounters = rows.map((row) => {
+  return rows.map((row) => {
     const facility = Array.isArray(row.facilities) ? row.facilities[0] : row.facilities;
     return {
       encounterDate: row.encounter_date,
@@ -42,8 +43,6 @@ async function loadTimelineNarrative(patientId: string): Promise<string> {
       facilityName: facility?.name ?? 'Unknown facility',
     };
   });
-
-  return buildTemplateSummary(DEIDENTIFIED_SUBJECT, encounters);
 }
 
 // Any staff with access to the patient can ask for a draft; per the exit
@@ -57,7 +56,8 @@ summariesRouter.post(
   async (req, res) => {
     const supabase = getSupabase()!;
     const patient = req.patient!;
-    const templateSummary = await loadTimelineNarrative(patient.id);
+    const encounters = await loadEncountersForSummary(patient.id);
+    const templateSummary = buildTemplateSummary(DEIDENTIFIED_SUBJECT, encounters);
     const generated = await generateSummary(templateSummary);
 
     const values: Record<string, unknown> = {
@@ -67,7 +67,7 @@ summariesRouter.post(
       source: generated.source,
       model: generated.model,
       model_version: generated.modelVersion,
-      draft_text: generated.draftText ?? templateSummary,
+      draft_text: generated.draftText ?? JSON.stringify(buildTemplateEntries(encounters)),
       triage_level: generated.triageLevel,
       triage_rationale: generated.triageRationale,
     };
